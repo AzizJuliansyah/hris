@@ -213,6 +213,69 @@ func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly boo
 	return leaves, nil
 }
 
+func (model LeaveModel) GetLeaveCounts(nik string, monthYear string) (int, int, error) {
+	parsedDate, err := time.Parse("January 2006", monthYear)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	query := `
+		SELECT leave_date 
+		FROM leave_employee 
+		WHERE deleted_at IS NULL 
+			AND status = 2
+	`
+
+	var args []interface{}
+
+	if nik != "" {
+		query += " AND nik = ?"
+		args = append(args, nik)
+	}
+
+	rows, err := model.db.Query(query, args...)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer rows.Close()
+
+	var totalAll, totalThisMonth int
+
+	for rows.Next() {
+		var leaveDateStr string
+		if err := rows.Scan(&leaveDateStr); err != nil {
+			return 0, 0, err
+		}
+
+		dateStrings := strings.Split(leaveDateStr, ",")
+		for _, ds := range dateStrings {
+			ds = strings.TrimSpace(ds)
+			if ds == "" {
+				continue
+			}
+
+			parsedLeaveDate, err := time.Parse("2006-01-02", ds)
+			if err != nil {
+				continue
+			}
+
+			totalAll++
+
+			if parsedLeaveDate.Month() == parsedDate.Month() &&
+				parsedLeaveDate.Year() == parsedDate.Year() {
+				totalThisMonth++
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return 0, 0, err
+	}
+
+	return totalAll, totalThisMonth, nil
+}
+
+
 func (model LeaveModel) CountAllLeave() (int, error) {
 	row := model.db.QueryRow("SELECT Count(*) FROM leave_employee WHERE deleted_at IS NULL")
 
@@ -311,43 +374,6 @@ func (model LeaveModel) FindLeavesByNIK(nik string) ([]entities.LeaveInAMonth, e
 
 	return leaves, nil
 }
-
-func (model LeaveModel) CountLeaveDaysThisMonth(nik string, month time.Month, year int) (int, error) {
-	query := `
-		SELECT leave_date 
-		FROM leave 
-		WHERE nik = ? AND status = 1
-	`
-
-	rows, err := model.db.Query(query, nik)
-	if err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-
-	count := 0
-	for rows.Next() {
-		var leaveDates string
-		if err := rows.Scan(&leaveDates); err != nil {
-			continue
-		}
-
-		dates := strings.Split(leaveDates, ",")
-		for _, d := range dates {
-			t, err := time.Parse("2006-01-02", strings.TrimSpace(d))
-			if err == nil && t.Month() == month && t.Year() == year {
-				count++
-			}
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 
 func (model LeaveModel) UpdateLeaveStatus(approvalLeave entities.ApprovalLeave) error {
 	query := `

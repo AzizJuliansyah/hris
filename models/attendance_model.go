@@ -62,23 +62,6 @@ func (model AttendanceModel) GetLastAttendance(nik string) string {
 	}
 }
 
-func (model AttendanceModel) CountAttendanceThisMonth(nik string, month time.Month, year int) (int, error) {
-	query := `
-		SELECT COUNT(*) 
-		FROM attendance 
-		WHERE nik = ? 
-			AND MONTH(checkin_time) = ? 
-			AND YEAR(checkin_time) = ?
-			AND checkin_time IS NOT NULL 
-			AND checkout_time IS NOT NULL
-	`
-
-	var count int
-	err := model.db.QueryRow(query, nik, int(month), year).Scan(&count)
-	return count, err
-}
-
-
 func (model AttendanceModel) CountDaysPresent(nik string, month time.Month, year int) (int, error) {
 	query := `
 		SELECT COUNT(*) FROM attendance 
@@ -166,6 +149,56 @@ func (model AttendanceModel) GetAttendanceList(nik string, monthYear string, tod
 
 	return attendances, nil
 	
+}
+
+func (model AttendanceModel) GetAttendanceCounts(nik string, monthYear string) (int, int, error) {
+	parsedDate, err := time.Parse("January 2006", monthYear)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// 1. Total semua kehadiran (checkin & checkout tidak null)
+	queryTotal := `
+		SELECT COUNT(*) 
+		FROM attendance 
+		WHERE deleted_at IS NULL 
+			AND checkin_time IS NOT NULL 
+			AND checkout_time IS NOT NULL
+	`
+	// 2. Total bulan ini
+	queryThisMonth := `
+		SELECT COUNT(*) 
+		FROM attendance 
+		WHERE deleted_at IS NULL 
+			AND checkin_time IS NOT NULL 
+			AND checkout_time IS NOT NULL
+			AND MONTH(checkin_time) = ? 
+			AND YEAR(checkin_time) = ?
+	`
+
+	var args []interface{}
+	argsMonth := []interface{}{parsedDate.Month(), parsedDate.Year()}
+
+	if nik != "" {
+		queryTotal += " AND nik = ?"
+		queryThisMonth += " AND nik = ?"
+		args = append(args, nik)
+		argsMonth = append(argsMonth, nik)
+	}
+
+	var totalAll int
+	err = model.db.QueryRow(queryTotal, args...).Scan(&totalAll)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var totalThisMonth int
+	err = model.db.QueryRow(queryThisMonth, argsMonth...).Scan(&totalThisMonth)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return totalAll, totalThisMonth, nil
 }
 
 

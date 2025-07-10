@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"hris/config"
 	"hris/models"
 	"hris/services/sessiondata"
@@ -42,10 +43,21 @@ func Home(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	now := time.Now()
-	attendanceCount, _ := models.NewAttendanceModel().CountAttendanceThisMonth(sessionNIK, now.Month(), now.Year())
-	leaveDays, _ := models.NewLeaveModel().CountLeaveDaysThisMonth(sessionNIK, now.Month(), now.Year())
-	data["attendanceCount"] = attendanceCount
-	data["leaveDays"] = leaveDays
+	month := now.Format("January 2006")
+	data["month"] = month
+	totalAttendanceAll, totalAttendanceThisMonth, err := models.NewAttendanceModel().GetAttendanceCounts(sessionNIK, month)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data["totalAttendanceAll"] = totalAttendanceAll
+	data["totalAttendanceThisMonth"] = totalAttendanceThisMonth
+
+	totalLeaveAll, totalLeaveThisMonth, err := models.NewLeaveModel().GetLeaveCounts(sessionNIK, month)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data["totalLeaveAll"] = totalLeaveAll
+	data["totalLeaveThisMonth"] = totalLeaveThisMonth
 
 	data["currentPath"] = request.URL.Path
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)

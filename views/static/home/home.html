@@ -27,48 +27,94 @@ Dashboard Karyawan
 {{ define "content" }}
 <div class="container-fluid p-0">
 	<div class="row">
-		<div class="col-sm-6">
+        <div class="col">
 			<div class="card">
 				<div class="card-body">
 					<div class="row">
 						<div class="col mt-0">
-							<h5 class="card-title">Total masuk bulan ini</h5>
+							<h5 class="card-title">Total Absen</h5>
 						</div>
-
 						<div class="col-auto">
 							<div class="stat text-primary">
-								<i class="align-middle" data-feather="log-in"></i>
+								<i class="align-middle" data-feather="users"></i>
 							</div>
 						</div>
 					</div>
-					{{ if .attendanceCount }}
-						<h1 class="mt-1">{{ .attendanceCount }}</h1>
+					{{ if .totalAttendanceAll }}
+						<h1 class="mt-1">{{ .totalAttendanceAll }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
 					{{ end }}
 				</div>
 			</div>
 		</div>
-		<div class="col-sm-6">
+
+		<div class="col">
 			<div class="card">
 				<div class="card-body">
 					<div class="row">
 						<div class="col mt-0">
-							<h5 class="card-title">Total cuti bulan ini</h5>
+							<h5 class="card-title">Absen Bulan {{ .month }}</h5>
 						</div>
-
 						<div class="col-auto">
 							<div class="stat text-primary">
 								<i class="align-middle" data-feather="coffee"></i>
 							</div>
 						</div>
 					</div>
-					{{ if .leaveDays }}
-						<h1 class="mt-1">{{ .leaveDays }}</h1>
+					{{ if .totalAttendanceThisMonth }}
+						<h1 class="mt-1">{{ .totalAttendanceThisMonth }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
 					{{ end }}
-
 				</div>
 			</div>
 		</div>
-	</div>
+
+		<div class="col">
+			<div class="card">
+				<div class="card-body">
+					<div class="row">
+						<div class="col mt-0">
+							<h5 class="card-title">Total Cuti</h5>
+						</div>
+						<div class="col-auto">
+							<div class="stat text-primary">
+								<i class="align-middle" data-feather="globe"></i>
+							</div>
+						</div>
+					</div>
+					{{ if .totalLeaveAll }}
+						<h1 class="mt-1">{{ .totalLeaveAll }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
+					{{ end }}
+				</div>
+			</div>
+		</div>
+
+		<div class="col">
+			<div class="card">
+				<div class="card-body">
+					<div class="row">
+						<div class="col mt-0">
+							<h5 class="card-title">Total Cuti Bulan {{ .month }}</h5>
+						</div>
+						<div class="col-auto">
+							<div class="stat text-primary">
+								<i class="align-middle" data-feather="log-in"></i>
+							</div>
+						</div>
+					</div>
+					{{ if .totalLeaveThisMonth }}
+						<h1 class="mt-1">{{ .totalLeaveThisMonth }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
+					{{ end }}
+				</div>
+			</div>
+		</div>
+    </div>
 
 	<h1 class="h3 mb-3">Berita terbaru</h1>
 
