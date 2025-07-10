@@ -1,0 +1,56 @@
+{{ define "title" }}
+    Edit Data Shift
+{{ end }}
+
+{{ define "css_extra" }}
+    <style>
+        .container {
+            max-width: 500px;
+        }
+    </style>
+{{ end }}
+
+{{ define "content" }}
+    <div class="container-fluid container p-0">
+        <div class="card">
+            <div class="card-header">
+                <a href="/shift" class="d-flex align-items-center">
+                    <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                    <h3 class="ms-2 mb-0 text-dark">Ubah Data Shift</h3>
+                </a>
+            </div>
+            <div class="card-body">
+                <form action="/shift/edit-shift?id={{.shift.Id}}" method="POST">
+                    <div class="mb-3">
+                        <label>Nama Shift</label>
+                        <input type="text" class="form-control {{ if .validation.Name }} is-invalid {{ end }}" name="name"
+                            value="{{ .shift.Name }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Name}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Jam Masuk</label>
+                        <input type="time" class="form-control {{ if .validation.StartTime }} is-invalid {{ end }}"
+                            name="start_time" value="{{ .shift.StartTime }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.StartTime}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Jam Pulang</label>
+                        <input type="time" class="form-control {{ if .validation.EndTime }} is-invalid {{ end }}"
+                            name="end_time" value="{{ .shift.EndTime }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.EndTime}}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{{ end }}

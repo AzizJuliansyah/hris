@@ -1,0 +1,130 @@
+{{ define "title" }}
+Edit News
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="card">
+                <form action="/news/edit-news?id={{ .news.Id }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="id" value="{{ .news.Id }}">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between">
+                            <a href="/news" class="d-flex align-items-center">
+                                <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                                <h3 class="ms-2 mb-0 text-dark">Buat Berita Baru</h3>
+                            </a>
+                            <button type="submit" class="btn btn-sm btn-primary rounded">Submit</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12 col-md-6">
+                                <div class="form-group">
+                                    <label for="photo">Thumbnail berita<small class="text-muted">(Optional)</small></label>
+                                    
+                                    <div class="custom-file">
+                                        <input type="file" class="form-control d-none" id="thumbnail" name="thumbnail" accept="image/*">
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('thumbnail').click()">Pilih File</button>
+                                        <small id="selected-file-name" class="text-muted d-block mt-1">Tidak ada file yang dipilih</small>
+                                    </div>
+                                    <img id="preview-image" src="{{ if and .news.Thumbnail.Valid (ne .news.Thumbnail.String "") }}/images/news_thumbnail/{{ .news.Thumbnail.String }}{{ else }}/images/news_default.png{{ end }}" alt="Preview" class="mt-2" style="max-width: 200px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="title">Title berita<small class="text-danger">*</small></label>
+                                    <input type="text" class="form-control {{ if .validation.Title }} is-invalid {{ end }}" id="title" name="title" value="{{ .news.Title }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Title}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="content">Content berita<small class="text-danger">*</small></label>
+                                    <textarea class="form-control {{ if .validation.Content }} is-invalid {{ end }}" id="content" name="content" rows="8">{{ .news.Content }}</textarea>
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Content}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="footer">Footer/Penutup berita<small class="text-danger">*</small></label>
+                                    <textarea class="form-control {{ if .validation.Footer }} is-invalid {{ end }}" id="footer" name="footer" rows="2">{{ .news.Footer }}</textarea>
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Footer}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="mx-1 my-4">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="assigne_nik">Penerima berita <small class="text-muted">(Optional)</small></label>
+                                    <input type="text" class="form-control {{ if .validation.Assigne_NIK }} is-invalid {{ end }}" id="assigne_nik" name="assigne_nik" value="{{ .news.Assigne_NIK.String }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Assigne_NIK}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="start_date">Tanggal dimulai <small class="text-muted">(Optional)</small></label>
+                                    <input type="date" class="form-control {{ if .validation.Start_Date }} is-invalid {{ end }}" id="start_date" name="start_date" value="{{ if .news.Start_Date.Valid }}{{ .news.Start_Date.Time.Format "2006-01-02" }}{{ end }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Start_Date}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="end_date">Tanggal berakhir <small class="text-muted">(Optional)</small></label>
+                                    <input type="date" class="form-control {{ if .validation.End_Date }} is-invalid {{ end }}" id="end_date" name="end_date" value="{{ if .news.End_Date.Valid }}{{ .news.End_Date.Time.Format "2006-01-02" }}{{ end }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.End_Date}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+<script>
+    document.getElementById('thumbnail').addEventListener('change', function(event) {
+		const file = event.target.files[0];
+		const fileNameLabel = document.getElementById('selected-file-name');
+
+		if (file) {
+			fileNameLabel.textContent = file.name;
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const img = document.getElementById('preview-image');
+				img.src = e.target.result;
+				img.style.display = 'block';
+			};
+			reader.readAsDataURL(file);
+		}
+	});
+</script>
+{{ end }}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Slip Gaji | {{ .slip.FormattedPeriod }} - {{ .slip.EmployeeName }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 20px 30px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .info-table, .salary-table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 4px 8px;
+        }
+        .salary-table th, .salary-table td {
+            border: 1px solid #999;
+            padding: 10px;
+            text-align: left;
+        }
+        .salary-table th {
+            background-color: #f2f2f2;
+        }
+        .salary-table .total {
+            background-color: #e0ffe0;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 40px;
+            font-style: italic;
+            font-size: 0.9em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Slip Gaji Karyawan</h2>
+
+        <table class="info-table">
+            <tr>
+                <td><strong>Nama</strong></td>
+                <td>: {{ .slip.EmployeeName }}</td>
+                <td><strong>NIK</strong></td>
+                <td>: {{ .slip.NIK }}</td>
+            </tr>
+            <tr>
+                <td><strong>Periode</strong></td>
+                <td>: {{ .slip.FormattedPeriod }}</td>
+                <td><strong>Tanggal Terbit</strong></td>
+                <td>: {{ if .slip.CreatedAt.Valid }}{{ .slip.CreatedAt.Time.Format "02 Januari 2006" }}{{ else }}-{{ end }}</td>
+            </tr>
+        </table>
+
+        <table class="salary-table">
+            <tr>
+                <th>Keterangan</th>
+                <th>Jumlah</th>
+            </tr>
+            <tr>
+                <td>Hari Masuk</td>
+                <td>{{ .slip.Total_Working_Days }} hari</td>
+            </tr>
+            <tr>
+                <td>Hari Cuti</td>
+                <td>{{ .slip.Total_Leave_Days }} hari</td>
+            </tr>
+            <tr>
+                <td>Gaji Bulanan</td>
+                <td>Rp {{ .slip.Monthly_Wages_Received.Int64 | formatNumber }}</td>
+            </tr>
+            <tr>
+                <td>Gaji Harian x Hari Masuk</td>
+                <td>Rp {{ .slip.Daily_Wages_Received.Int64 | formatNumber }}</td>
+            </tr>
+            <tr>
+                <td>Tunjangan Makan x Hari Masuk</td>
+                <td>Rp {{ .slip.Meal_Allowance_Received.Int64 | formatNumber }}</td>
+            </tr>
+            <tr>
+                <td>Tunjangan Transport x Hari Masuk</td>
+                <td>Rp {{ .slip.Transport_Allowance_Received.Int64 | formatNumber }}</td>
+            </tr>
+            <tr class="total">
+                <td>Total Gaji</td>
+                <td>Rp {{ .slip.Salary_Total.Int64 | formatNumber }}</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            Slip ini dicetak otomatis dan sah tanpa tanda tangan.
+        </div>
+    </div>
+
+    <script>
+        window.onload = function () {
+            window.print();
+        };
+    </script>
+</body>
+</html>

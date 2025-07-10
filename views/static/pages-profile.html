@@ -1,0 +1,269 @@
+{{ define "title" }}
+User Profile
+{{ end }}
+
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+	<div class="row">
+		<div class="col-md-4 col-xl-3">
+			<div class="card mb-3">
+				<div class="card-header">
+					<h4 class="mb-0"><strong>Profile Details</strong></h4>
+				</div>
+				<div class="card-body text-center pt-0">
+					<img src="{{ .photoPath }}" alt="{{ .user.Name }} Photo Profile" class="img-fluid rounded mb-2" width="128" height="128" />
+					<h5 class="card-title mb-0">{{ .user.Name }}</h5>
+					{{ if eq .user.IsAdmin true }}
+                        <span class="badge bg-success">Admin</span>
+                    {{ else }}
+                        <span class="badge bg-warning">Karyawan</span>
+                    {{ end }}
+				</div>
+				<hr class="my-0" />
+				<div class="card-body">
+					<h5 class="h6 card-title">About</h5>
+					<ul class="list-unstyled mb-0">
+						<li class="mb-1">
+							<span data-feather="mail" class="feather-sm me-1"></span> Email 
+							<p class="text-primary mb-2">{{ .user.Email }}</p>
+						</li>
+						<li class="mb-1">
+							<span data-feather="phone" class="feather-sm me-1"></span> Phone Number
+							<p class="text-primary mb-2">{{ .user.Phone }}</p>
+						</li>
+						<hr class="mx-0" />
+						<li class="mb-1">
+							<span data-feather="user" class="feather-sm me-1"></span> Gender 
+							{{ if eq .user.Gender "M" }}
+								<p class="text-primary mb-2">Male</p>
+							{{ else if eq .user.Gender "F" }}
+								<p class="text-primary mb-2">Female</p>
+							{{ else }}
+								<p class="text-danger mb-2">Undefined</p>
+							{{ end }}
+						</li>
+						<li class="mb-1">
+							<span data-feather="calendar" class="feather-sm me-1"></span> Birth Date 
+							<p class="text-primary mb-2">{{ .birthDateFormat }}</p>
+						</li>
+						<li class="mb-1">
+							<span data-feather="calendar" class="feather-sm me-1"></span> Address 
+							<p class="text-primary mb-2">{{ .user.Address }}</p>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-8 col-xl-9">
+			<div class="card">
+				<div class="card-header">
+					<h4 class="mb-4"><strong>Update Profile</strong></h4>
+					<ul class="nav nav-tabs mb-3">
+						<li class="nav-item mx-2 {{ if eq .tab "profile" }}active{{ end }}" role="presentation">
+						  	<a class="nav-link {{ if eq .tab "profile" }}active{{ end }}" id="tabs-profile-tab" data-bs-toggle="tab" data-bs-target="#tabs-profile"><h1 class="card-title mb-0 text-dark">Profile</h1></a>
+						</li>
+						<li class="nav-item mx-2 {{ if eq .tab "password" }}active{{ end }}" role="presentation">
+						  	<a class="nav-link {{ if eq .tab "password" }}active{{ end }}" id="tabs-password-tab" data-bs-toggle="tab" data-bs-target="#tabs-password"><h1 class="card-title mb-0 text-dark">Password</h1></a>
+						</li>
+					</ul>
+				</div>
+				<div class="card-body h-100">
+					<div class="tab-content" id="tabs-tabContent">
+						<div class="tab-pane fade {{ if eq .tab "profile" }}show active{{ end }}" id="tabs-profile" role="tabpanel">
+							<form action="/pages-profile" method="post" enctype="multipart/form-data">
+								<input type="hidden" name="edit-profile" value="1">
+								<div class="row mb-3">
+									<div class="col-12 col-md-6">
+										<div class="form-group">
+											<label for="photo">Photo profile <small class="text-muted">(Optional)</small></label>
+											
+											<div class="custom-file">
+												<input type="file" class="form-control d-none" id="photo" name="photo" accept="image/*">
+												<button type="button" class="btn btn-secondary" onclick="document.getElementById('photo').click()">Pilih File</button>
+												<small id="selected-file-name" class="text-muted d-block mt-1">Tidak ada file yang dipilih</small>
+											</div>
+									
+											<img id="preview-image" src="" alt="Preview" class="mt-2" style="max-width: 200px; display: none;">
+										</div>
+									</div>
+								</div>
+								<div class="row mb-3">
+									<div class="col-12 col-md-6">
+										<div class="form-group">
+											<label for="name">Name <small class="text-danger">*</small></label>
+											<input type="text" class="form-control {{ if .validation.Name }} is-invalid {{ end }}" id="name" name="name" value="{{ if .userInput.Name }}{{ .userInput.Name }}{{ else }}{{ .user.Name }}{{ end }}">
+											<div class="invalid-feedback">
+												{{ .validation.Name}}
+											</div>
+										</div>
+									</div>
+									<div class="col-12 col-md-6">
+										<div class="form-group">
+											<label for="email">Email address <small class="text-danger">*</small></label>
+											<input type="email" class="form-control {{ if .validation.Email }} is-invalid {{ end }}" id="email" name="email" value="{{ if .userInput.Email }}{{ .userInput.Email }}{{ else }}{{ .user.Email }}{{ end }}">
+											<div class="invalid-feedback">
+												{{ .validation.Email}}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row mb-3">
+									<div class="col-12 col-md-6">
+										<div class="form-group">
+											<label for="phone">Phone <small class="text-danger">*</small></label>
+											<input type="text" class="form-control {{ if .validation.Phone }} is-invalid {{ end }}" id="phone" name="phone" value="{{ if .userInput.Phone }}{{ .userInput.Phone }}{{ else }}{{ .user.Phone }}{{ end }}">
+											<div class="invalid-feedback">
+												{{ .validation.Phone}}
+											</div>
+										</div>
+									</div>
+								</div>
+								<hr class="mx-0">
+								<div class="row mb-3">
+									<div class="col-12 col-md-6">
+										<div class="form-group">
+											<label for="gender">Gender <small class="text-danger">*</small></label>
+											<select class="form-control {{ if .validation.Gender }} is-invalid {{ end }}" id="gender" name="gender">
+												<option value="default" selected disabled>Select Gender</option>
+												<option value="M" {{ if eq .user.Gender "M" }} selected {{ end }}>Male</option>
+												<option value="F" {{ if eq .user.Gender "F" }} selected {{ end }}>Female</option>
+											</select>
+											<div class="invalid-feedback">
+												{{ .validation.Gender}}
+											</div>
+										</div>
+									</div>
+									<div class="col-12 col-md-6">
+										<div class="form-group">
+											<label for="birth_date">Birth date <small class="text-danger">*</small></label>
+											<input type="date" class="form-control {{ if .validation.BirthDate }} is-invalid {{ end }}" id="birth_date" name="birth_date" value="{{ if .userInput.BirthDate }}{{ .userInput.BirthDate }}{{ else }}{{ .user.BirthDate }}{{ end }}">
+											<div class="invalid-feedback">
+												{{ .validation.BirthDate}}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row mb-3">
+									<div class="form-group">
+										<label for="address">Address <small class="text-danger">*</small></label>
+										<textarea class="form-control {{ if .validation.Address }} is-invalid {{ end }}" id="address" name="address" rows="3">{{ if .userInput.Address }}{{ .userInput.Address }}{{ else }}{{ .user.Address }}{{ end }}</textarea>
+										<div class="invalid-feedback">
+											{{ .validation.Address}}
+										</div>
+									</div>
+								</div>
+								
+								<div class="d-grid">
+									<button type="submit" class="btn btn-primary">Submit</button>
+								</div>
+							</form>
+						</div>
+						<div class="tab-pane fade {{ if eq .tab "password" }}show active{{ end }}" id="tabs-password" role="tabpanel">
+							<form action="/pages-profile" method="post">
+								<input type="hidden" name="change_password" value="1">
+								<div class="row mb-3">
+									<div class="col-12 col-md-8">
+										<label for="old_password">Old Password <small class="text-danger">*</small></label>
+										<div class="input-group">
+											<input type="password" class="form-control {{ if .validation.OldPassword }} is-invalid {{ end }}" id="old_password" name="old_password" value="{{ .pass.OldPassword }}">
+											<span class="input-group-text toggle-password cursor-pointer" data-target="old_password">
+												<i data-feather="eye"></i>
+											</span>
+											<div class="invalid-feedback">
+												{{ .validation.OldPassword }}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row mb-3">
+									<div class="col-12 col-md-8">
+										<label for="new_password">New Password <small class="text-danger">*</small></label>
+										<div class="input-group">
+											<input type="password" class="form-control {{ if .validation.NewPassword }} is-invalid {{ end }}" id="new_password" name="new_password" value="{{ .pass.NewPassword }}">
+											<span class="input-group-text toggle-password cursor-pointer" data-target="new_password" >
+												<i data-feather="eye"></i>
+											</span>
+											<div class="invalid-feedback">
+												{{ .validation.NewPassword }}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row mb-3">
+									<div class="col-12 col-md-8">
+										<label for="repeat_password">Repeat Password <small class="text-danger">*</small></label>
+										<div class="input-group">
+											<input type="password" class="form-control {{ if .validation.RepeatPassword }} is-invalid {{ end }}" id="repeat_password" name="repeat_password">
+											<span class="input-group-text toggle-password cursor-pointer" data-target="repeat_password">
+												<i data-feather="eye"></i>
+											</span>
+											<div class="invalid-feedback">
+												{{ .validation.RepeatPassword }}
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row mb-3">
+									<div class="col-12 col-md-8">
+										<div class="d-grid">
+											<button type="submit" class="btn btn-primary">Submit</button>
+										</div>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		feather.replace();
+
+		document.querySelectorAll(".toggle-password").forEach(function (el) {
+			el.addEventListener("click", function () {
+				const targetId = el.getAttribute("data-target");
+				const input = document.getElementById(targetId);
+
+				if (!input) return;
+
+				const isPassword = input.type === "password";
+				input.type = isPassword ? "text" : "password";
+
+				// Ganti isi span untuk icon
+				el.innerHTML = `<i data-feather="${isPassword ? "eye-off" : "eye"}"></i>`;
+				feather.replace();
+			});
+		});
+	});
+
+
+	document.getElementById('photo').addEventListener('change', function(event) {
+		const file = event.target.files[0];
+		const fileNameLabel = document.getElementById('selected-file-name');
+
+		if (file) {
+			fileNameLabel.textContent = file.name;
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const img = document.getElementById('preview-image');
+				img.src = e.target.result;
+				img.style.display = 'block';
+			};
+			reader.readAsDataURL(file);
+		} else {
+			fileNameLabel.textContent = 'Tidak ada file yang dipilih';
+			document.getElementById('preview-image').style.display = 'none';
+		}
+	});
+	
+</script>  
+{{ end }}

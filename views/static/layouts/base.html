@@ -1,0 +1,39 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{ template "header" . }}
+    {{ block "css_extra" . }}{{ end }}
+</head>
+
+<body>
+    <div class="wrapper">
+        {{ template "sidebar" . }}
+        <div class="main">
+            {{ template "navbar" . }}
+            <main class="content">
+                {{ if .error }}
+                    <div class="alert alert-danger">
+                        {{ .error }}
+                    </div>
+                {{ end }}
+                {{ if .success }}
+                    <div class="alert alert-success">
+                        {{ .success }}
+                    </div>
+                {{ end }}
+                <!-- {{ if .validation }}
+                    <div class="alert alert-danger">
+                        {{ .validation }}
+                    </div>
+                {{ end }} -->
+                {{ block "content" . }}{{ end }}
+            </main>
+            {{ template "footer" . }}
+        </div>
+    </div>
+    {{ template "footer_js" . }}
+    {{ block "js_extra" . }}{{ end }}
+</body>
+</html>
+{{ end }}

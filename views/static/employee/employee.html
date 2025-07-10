@@ -1,0 +1,153 @@
+{{ define "title" }}
+List Karyawan
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="row mb-2">
+        <div class="col">
+            <h1 class="h3 mb-3">List Karyawan</h1>
+        </div>
+        <div class="col text-end">
+            <a class="btn btn-primary" href="/employee/add-employee"> <i class="align-middle me-1" data-feather="user-plus"></i> Tambah Karyawan</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 d-flex">
+            <div class="card flex-fill">
+                <div class="row">
+                    <div class="d-flex justify-content-end">
+                        <div class="col-6 col-md-4 col-lg-2 m-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="adminOnly" onclick="filteradminOnly(this)" {{ if .adminOnly }} checked {{ end }}>
+                                <label class="form-check-label" for="adminOnly">Hanya Admin</label>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2 m-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="employeeOnly" onclick="filteremployeeOnly(this)" {{ if .employeeOnly }} checked {{ end }}>
+                                <label class="form-check-label" for="employeeOnly">Hanya Karyawan</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="employeeTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>NIK</th>
+                                    <th>Nama</th>
+                                    <th>Email</th>
+                                    <th>No.HP</th>
+                                    <th>Gender</th>
+                                    <th>Admin?</th>
+                                    <th>Foto</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ $sessionNIK := $.sessionNIK }}
+                                {{ range .employees }}
+                                <tr>
+                                    <td>{{ .NIK }}</td>
+                                    <td>{{ .Name }}</td>
+                                    <td>{{ .Email }}</td>
+                                    <td>{{ .Phone }}</td>
+                                    <td>
+                                        {{ if eq .Gender "M" }}Laki-laki {{ else if eq .Gender "F" }} Perempuan {{ else }} - {{ end }}
+                                    </td>
+                                    <td>
+                                        {{ if eq .IsAdmin true }}
+                                        <span class="badge bg-success">Admin</span>
+                                        {{ else }}
+                                        <span class="badge bg-warning">Karyawan</span>
+                                        {{ end }}
+                                    </td>
+                                    <td>
+                                        {{ if .Photo.Valid }}
+                                                <img src="/images/user_photo/{{ .Photo.String }}" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                            {{ else }}
+                                                <img src="/images/user_default.png" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                            {{ end }}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <a href="/employee/detail-employee?uuid={{.UUID}}" class="btn btn-primary btn-sm">Detail</a>
+                                            </div>
+                                            {{ if ne .NIK $sessionNIK }}
+                                            <div class="mx-1">
+                                                <a href="/employee/edit-employee?uuid={{.UUID}}" class="btn btn-warning btn-sm">Edit</a>
+                                            </div>
+                                            <div class="mx-1">
+                                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#hapusEmployee{{ .UUID }}">
+                                                    Hapus
+                                                </button>
+                                                  
+                                                <div class="modal fade" id="hapusEmployee{{ .UUID }}" tabindex="-1" aria-labelledby="hapusEmployee{{ .UUID }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h1 class="modal-title fs-5" id="hapusEmployee{{ .UUID }}Label">Hapus Employee {{ .Name }}</h1>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="form-group">
+                                                                        <img src="/images/logo_danger_2.png" class="img-fluid mr-2" width="120">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <h6>Apakah anda yakin ingin menghapus employee ini?</h6>
+                                                                        <span>Employee ini akan <span class="text-danger">dihapus secara permanen</span> dan tidak dapat dikembalikan lagi.</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="float-end">
+                                                                    <a href="/employee/delete-employee?uuid={{.UUID}}" class="btn btn-outline-danger mx-1">Hapus Employee</a>
+                                                                    <button type="button" class="btn btn-outline-white mx-1" data-dismiss="modal">Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {{ end }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function () {
+        $('#employeeTable').DataTable();
+    });
+
+    function filteradminOnly(checkbox) {
+        if (checkbox.checked) {
+            window.location.href = '?admin_only=true';
+        } else {
+            window.location.href = '?admin_only=false';
+        }
+    }
+
+    function filteremployeeOnly(checkbox) {
+        if (checkbox.checked) {
+            window.location.href = '?employee_only=true';
+        } else {
+            window.location.href = '?employee_only=false';
+        }
+    }
+</script>
+{{ end }}

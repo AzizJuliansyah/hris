@@ -1,0 +1,102 @@
+{{ define "title" }}
+    Edit Data Employee
+{{ end }}
+
+{{ define "css_extra" }}
+    <style>
+        .container {
+            max-width: 500px;
+        }
+    </style>
+{{ end }}
+
+{{ define "content" }}
+    <div class="container-fluid container p-0">
+
+        <div class="card">
+            <div class="card-header">
+                <a href="/employee" class="d-flex align-items-center">
+                    <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                    <h3 class="ms-2 mb-0 text-dark">Ubah Data Karyawan</h3>
+                </a>
+            </div>
+            <div class="card-body">
+                <form action="/employee/edit-employee?uuid={{.employee.UUID}}" method="POST">
+
+                    <div class="mb-3">
+                        <label>NIK</label>
+                        <input type="text" class="form-control {{ if .validation.NIK }} is-invalid {{ end }}" name="nik"
+                            value="{{ .employee.NIK }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.NIK}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Nama Lengkap</label>
+                        <input type="text" class="form-control {{ if .validation.Name }} is-invalid {{ end }}" name="name"
+                            value="{{ .employee.Name }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Name}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control {{ if .validation.Email }} is-invalid {{ end }}" name="email"
+                            value="{{ .employee.Email }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Email}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>No. Handphone</label>
+                        <input type="number" class="form-control {{ if .validation.Phone }} is-invalid {{ end }}" name="phone"
+                            value="{{ .employee.Phone }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Phone}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Alamat</label>
+                        <textarea class="form-control {{ if .validation.Address }} is-invalid {{ end }}" name="address"
+                            rows="3">{{ .employee.Address }}</textarea>
+                        <div class="invalid-feedback">
+                            {{ .validation.Address}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Jenis Kelamin</label>
+                        <select class="form-control {{ if .validation.Gender }} is-invalid {{ end }}" name="gender">
+                            <option value="">-- Pilih --</option>
+                            <option {{ if eq .employee.Gender `M` }} selected {{ end }} value="M">Laki-laki</option>
+                            <option {{ if eq .employee.Gender `F` }} selected {{ end }} value="F">Perempuan</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            {{ .validation.Gender}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="">Tanggal Lahir</label>
+                        <input type="date" name="birth_date"
+                            class="form-control {{ if .validation.BirthDate }} is-invalid {{end}}"
+                            value="{{ .employee.BirthDate }}" />
+                        <div class="invalid-feedback">{{ .validation.BirthDate }}</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <label class="form-check-label" for="isAdmin">Admin?</label>
+                        <input class="form-check-input" type="checkbox" role="switch" name="is_admin" id="isAdmin" value="false" {{ if .employee.IsAdmin }} checked {{ end }}>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Simpan</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+{{ end }}

@@ -1,0 +1,89 @@
+{{ define "title" }}
+    Edit Data Employee
+{{ end }}
+
+{{ define "css_extra" }}
+    <style>
+        .container {
+            max-width: 500px;
+        }
+    </style>
+{{ end }}
+
+{{ define "content" }}
+    <div class="container-fluid container p-0">
+
+        <div class="card">
+            <div class="card-header">
+                <a href="/salary-list" class="d-flex align-items-center">
+                    <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                    <h3 class="ms-2 mb-0 text-dark">Input Gaji Karyawan</h3>
+                </a>
+            </div>
+            <div class="card-body">
+                <form action="/salary/input-salary" method="POST">
+                    <div class="mb-3">
+                        <label>NIK</label>
+                        <!-- <input type="text" class="form-control {{ if .validation.NIK }} is-invalid {{ end }}" name="nik"
+                            value="{{ .salary.NIK }}"> -->
+                        <select class="form-select js-example-basic-single {{ if .validation.NIK }}is-invalid{{ end }}" name="nik" style="width: 100%;">
+                            <option value="default" selected disabled>-- Pilih Karyawan --</option>
+                            {{ range .employees }}
+                                <option value="{{ .NIK }}" {{ if eq $.salary.NIK (printf "%s" .NIK) }}selected{{ end }}>{{ .Name }}</option>
+                            {{ end }}
+                        </select>
+                        <div class="invalid-feedback">
+                            {{ .validation.NIK}}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Upah Perbulan</label>
+                        <input type="number" min="0" class="form-control {{ if .validation.Monthly_Wages }} is-invalid {{ end }}" name="monthly_wages"
+                            value="{{ .salary.Monthly_Wages.String }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Monthly_Wages }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Upah Harian</label>
+                        <input type="number" min="0" class="form-control {{ if .validation.Daily_Wages }} is-invalid {{ end }}" name="daily_wages"
+                            value="{{ .salary.Daily_Wages.String }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Daily_Wages }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Uang Makan</label>
+                        <input type="number" min="0" class="form-control {{ if .validation.Meal_Allowance }} is-invalid {{ end }}" name="meal_allowance"
+                            value="{{ .salary.Meal_Allowance.String }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Meal_Allowance }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Uang Transport</label>
+                        <input type="number" min="0" class="form-control {{ if .validation.Transport_Allowance }} is-invalid {{ end }}" name="transport_allowance"
+                            value="{{ .salary.Transport_Allowance.String }}">
+                        <div class="invalid-feedback">
+                            {{ .validation.Transport_Allowance }}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Simpan</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+{{ end }}
+
+{{ define "js_extra" }}
+<script>
+     $(document).ready(function() {
+            $('.js-example-basic-single').select2({
+                placeholder: "Cari karyawan...",
+                allowClear: true
+            });
+        });
+</script>
+{{ end }}

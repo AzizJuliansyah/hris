@@ -1,0 +1,249 @@
+{{ define "title" }}
+    List Leave Requests
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="row">
+        <div class="col">
+            <h1 class="h3 mb-3">List Pengajuan Cuti</h1>
+        </div>
+        <div class="col">
+            <div class="d-flex justify-content-end">
+                <a href="/leave/leave-type" class="btn btn-md btn-info">Jenis Cuti</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="todayLeave" onclick="filterTodayLeave(this)" {{ if .todayLeave }} checked {{ end }}>
+                                <label class="form-check-label" for="todayLeave">Pengajuan Hari Ini</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <select class="form-select mb-3" id="monthSelect" onchange="changeMonth(this)">
+                                {{range .months}}
+                                    <option value="{{.}}" {{if eq . $.selectedMonth}}selected{{end}}>{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="leaveTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>Diajukan pada</th>
+                                    <th>NIK</th>
+                                    <th>Nama</th>
+                                    <th>Tipe Cuti</th>
+                                    <th>Status</th>
+                                    <th>Lampiran</th>
+                                    <th>Diproses pada</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .leaves}}
+                                <tr>
+                                    <td>{{.CreatedAt.Format "02 Jan 2006"}}</td>
+                                    <td>{{.NIK}}</td>
+                                    <td>{{.Name}}</td>
+                                    <td>{{.LeaveTypeName}}</td>
+                                    <td>
+                                        {{ if eq .Status 1 }}
+                                            <span class="badge bg-warning">Menunggu</span>
+                                        {{ else if eq .Status 2 }}
+                                            <span class="badge bg-success">Disetujui</span>
+                                        {{ else if eq .Status 3 }}
+                                            <span class="badge bg-danger">Ditolak</span>
+                                        {{ else }}
+                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                        {{ end }}
+                                    </td>
+                                    <td>
+                                        {{ if and .Attachment.Valid (ne .Attachment.String "")}}
+                                            <img src="data:image/jpeg;base64,{{ .Attachment.String }}" alt="Foto {{ .Name }}" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                        {{ else }}
+                                            <img src="https://placehold.co/60x60" alt="Foto Kosong" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                        {{ end }}
+                                    </td>
+                                    <td>
+                                        {{if .UpdatedAt.Valid}}
+                                            {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                        {{else}}
+                                            <span>-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#detail{{ .Id }}">
+                                                    Detail
+                                                </button>
+                                                  
+                                                  <!-- Modal -->
+                                                <div class="modal fade" id="detail{{ .Id }}" tabindex="-1" aria-labelledby="detail{{ .Id }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h1 class="modal-title fs-5" id="detail{{ .Id }}Label"><strong>Detail Pengajuan Cuti {{ .Name }}</strong></h1>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <h5><strong>Tanggal pengajuan: {{.CreatedAt.Format "02 Jan 2006"}}</strong></h5>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">NIK <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .NIK }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Nama <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Name }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Tipe cuti <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{.LeaveTypeName}}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Tanggal cuti <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{range .LeaveDate}}
+                                                                                <div>- {{.Format "02 Jan 2006"}}</div>
+                                                                            {{end}}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Alasan cuti <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{.Reason}}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Bukti Lampiran <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{ if and .Attachment.Valid (ne .Attachment.String "")}}
+                                                                            <img src="data:image/jpeg;base64,{{ .Attachment.String }}" alt="Foto {{ .Name }}" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+
+                                                                            <a href="data:image/jpeg;base64,{{ .Attachment.String }}" download="lampiran.jpg">Download</a>
+                                                                        {{ else }}
+                                                                            <img src="https://placehold.co/60x60" alt="Foto Kosong" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                                                        {{ end }}
+                                                                    </div>
+                                                                </div>
+                                                                <hr class="mx-0">
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Status cuti <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{ if eq .Status 1 }}
+                                                                            <span class="badge bg-warning">Menunggu</span>
+                                                                        {{ else if eq .Status 2 }}
+                                                                            <span class="badge bg-success">Disetujui</span>
+                                                                        {{ else if eq .Status 3 }}
+                                                                            <span class="badge bg-danger">Ditolak</span>
+                                                                        {{ else }}
+                                                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                                                        {{ end }}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Catatan admin <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{if .ReasonStatus.Valid}}
+                                                                            {{.ReasonStatus.String}}
+                                                                        {{else}}
+                                                                            <span>-</span>
+                                                                        {{end}}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Diproses tanggal <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{if .UpdatedAt.Valid}}
+                                                                            {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                                                        {{else}}
+                                                                            <span>-</span>
+                                                                        {{end}}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mx-1">
+                                                <a href="/leave/approval?id={{.Id}}" class="btn btn-primary btn-sm">Proses</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function () {
+        $('#leaveTable').DataTable({
+            ordering: false, // matikan fitur sorting
+            pageLength: 25
+        });
+    });
+</script>
+
+<script>
+    function changeMonth(select) {
+        window.location.href = '?month=' + encodeURIComponent(select.value);
+    }
+    
+    function filterTodayLeave(checkbox) {
+        if (checkbox.checked) {
+            window.location.href = '?today_leave=true';
+        } else {
+            window.location.href = '?today_leave=false';
+        }
+    }
+</script>
+{{ end }}

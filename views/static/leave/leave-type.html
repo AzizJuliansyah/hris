@@ -1,0 +1,199 @@
+{{ define "title" }}
+    List Leave Requests
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="row">
+        <div class="col">
+            <a href="/leave-list" class="d-flex align-items-center">
+                <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                <h3 class="ms-2 mb-0 text-dark">Tipe Cuti</h3>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <div class="d-flex justify-content-end">
+                        <div class="mx-1">
+                            <button type="button" class="btn btn-info btn-md" data-bs-toggle="modal" data-bs-target="#addLeaveType">
+                                Tambah Tipe Cuti
+                            </button>
+                              
+                            <div class="modal fade" id="addLeaveType" tabindex="-1" aria-labelledby="addLeaveTypeLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header border-bottom-0">
+                                            <h3 class="modal-title" id="addLeaveTypeLabel">Tambah Tipe Cuti</h3>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form action="/leave/leave-type" method="post">
+                                                <input type="hidden" name="add-leave-type" value="1">
+                                                <div class="mb-3">
+                                                    <label>Nama Cuti</label>
+                                                    <input type="text" class="form-control {{ if .validationaddLeave.Name }} is-invalid {{ end }}" name="name"
+                                                        value="{{ .addLeave.Name }}">
+                                                    <div class="invalid-feedback">
+                                                        {{ .validationaddLeave.Name }}
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label>Maximal Cuti</label>
+                                                    <div class="input-group">
+                                                        <input type="number" min="0" class="form-control {{ if .validationaddLeave.MaxDay }} is-invalid {{ end }}" name="max_day" value="{{ .addLeave.MaxDay }}">
+                                                        <div class="input-group-text">Hari</div>
+                                                        <div class="invalid-feedback">
+                                                            {{ .validationaddLeave.MaxDay }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="float-end mt-3">
+                                                    <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-outline-primary mx-1">Tambah</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {{ $edit := .editLeave }}
+                    {{ $validasi := .validationeditLeave }}
+                    <div class="table-responsive">
+                        <table id="leaveTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>Nama Cuti</th>
+                                    <th>Maximal Cuti</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range .leaveType }}
+                                {{ $id := .Id }}
+                                <tr>
+                                    <td>{{ .Name }}</td>
+                                    <td>{{ .MaxDay }} <span>Hari</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editLeaveType{{ .Id }}">
+                                                    Edit
+                                                </button>
+                                                  
+                                                <div class="modal fade" id="editLeaveType{{ .Id }}" tabindex="-1" aria-labelledby="editLeaveType{{ .Id }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h3 class="modal-title" id="editLeaveType{{ .Id }}Label">Edit Tipe Cuti: {{ .Name }}</h3>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <form action="/leave/leave-type" method="post">
+                                                                    <input type="hidden" name="edit-leave-type" value="1">
+                                                                    <input type="hidden" name="id" value="{{ .Id }}">
+                                                                    <div class="mb-3">
+                                                                        <label>Nama Cuti</label>
+                                                                        <input type="text" class="form-control {{ if and $validasi (eq $edit.Id .Id) }}{{ if $validasi.Name }}is-invalid{{ end }}{{ end }}" name="name" value="{{ if and $edit (eq $edit.Id .Id) }}{{ $edit.Name }}{{ else }}{{ .Name }}{{ end }}">
+                                                                        {{ if and $validasi (eq $edit.Id .Id) }}
+                                                                            <div class="invalid-feedback">
+                                                                                {{ $validasi.Name }}
+                                                                            </div>
+                                                                        {{ end }}
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label>Maximal Cuti</label>
+                                                                        <input type="text" class="form-control {{ if and $validasi (eq $edit.Id .Id) }}{{ if $validasi.MaxDay }}is-invalid{{ end }}{{ end }}" name="max_day" value="{{ if and $edit (eq $edit.Id .Id) }}{{ $edit.MaxDay }}{{ else }}{{ .MaxDay }}{{ end }}">
+                                                                        {{ if and $validasi (eq $edit.Id .Id) }}
+                                                                            <div class="invalid-feedback">
+                                                                                {{ $validasi.MaxDay }}
+                                                                            </div>
+                                                                        {{ end }}
+                                                                    </div>
+                                                                    <div class="float-end mt-3">
+                                                                        <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
+                                                                        <button type="submit" class="btn btn-outline-primary mx-1">Edit</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mx-1">
+                                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#hapusLeaveType{{ .Id }}">
+                                                    Hapus
+                                                </button>
+                                                  
+                                                <div class="modal fade" id="hapusLeaveType{{ .Id }}" tabindex="-1" aria-labelledby="hapusLeaveType{{ .Id }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h1 class="modal-title fs-5" id="hapusLeaveType{{ .Id }}Label">Hapus Leave Type {{ .Name }}</h1>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="form-group">
+                                                                        <img src="/images/logo_danger_2.png" class="img-fluid mr-2" width="120">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <h6>Apakah anda yakin ingin menghapus leave type ini?</h6>
+                                                                        <span>Leave type ini akan <span class="text-danger">dihapus secara permanen</span> dan tidak dapat dikembalikan lagi.</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="float-end mt-3">
+                                                                    <a href="/leave/delete-leave-type?delete_id={{.Id}}" class="btn btn-outline-danger mx-1">Hapus Leave Type</a>
+                                                                    <button type="button" class="btn btn-outline-white mx-1" data-dismiss="modal">Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function () {
+        $('#leaveTable').DataTable({
+            ordering: false, // matikan fitur sorting
+            pageLength: 10
+        });
+    });
+</script>
+
+<script>
+    function changeMonth(select) {
+        window.location.href = '?month=' + encodeURIComponent(select.value);
+    }
+    
+    function filterTodayLeave(checkbox) {
+        if (checkbox.checked) {
+            window.location.href = '?today_leave=true';
+        } else {
+            window.location.href = '?today_leave=false';
+        }
+    }
+</script>
+{{ end }}

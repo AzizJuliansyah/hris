@@ -1,0 +1,98 @@
+{{ define "sidebar" }}
+<aside id="sidebar" class="sidebar js-sidebar">
+    <div class="sidebar-content js-simplebar">
+        <a class="sidebar-brand" href="">
+            <span class="align-middle">HRIS IDN</span>
+        </a>
+
+        <ul class="sidebar-nav">
+            {{ if .isAdmin }}
+            <li class="sidebar-header">
+                Menu Admin
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/home-admin") (eq .currentPath "/pages-profile") }}active{{ end }}">
+                <a class="sidebar-link" href="/home-admin">
+                    <i class="align-middle" data-feather="home"></i> <span class="align-middle">Beranda</span>
+                </a>
+            </li>            
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/news") (eq .currentPath "//detail-news") (eq .currentPath "/news/add-news") (eq .currentPath "/news/edit-news") }} active {{ end }}">
+                <a class="sidebar-link" href="/news">
+                    <i class="align-middle" data-feather="globe"></i> <span class="align-middle">News</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/employee") (eq .currentPath "/employee/detail-employee") (eq .currentPath "/employee/add-employee") (eq .currentPath "/employee/edit-employee") }} active {{ end }}">
+                <a class="sidebar-link" href="/employee">
+                    <i class="align-middle" data-feather="users"></i> <span class="align-middle">Karyawan</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/office") (eq .currentPath "/office/add-office") (eq .currentPath "/office/edit-office") }} active {{ end }}">
+                <a class="sidebar-link" href="/office">
+                    <i class="align-middle" data-feather="map"></i> <span class="align-middle">Kantor</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/shift") (eq .currentPath "/shift/add-shift") (eq .currentPath "/shift/edit-shift") }} active {{ end }}">
+                <a class="sidebar-link" href="/shift">
+                    <i class="align-middle" data-feather="sun"></i> <span class="align-middle">Shift</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if eq .currentPath "/attendance-list" }} active {{ end }}">
+                <a class="sidebar-link" href="/attendance-list">
+                    <i class="align-middle" data-feather="log-in"></i> <span
+                        class="align-middle">Kehadiran</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/leave-list") (eq .currentPath "/leave/approval") (eq .currentPath "/leave/leave-type") }}active{{ end }}">
+                <a class="sidebar-link" href="/leave-list">
+                    <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">Cuti</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/salary-list") (eq .currentPath "/salary/input-salary") (eq .currentPath "/salary/detail-salary") (eq .currentPath "/salary/edit-salary") }}active{{ end }}">
+                <a class="sidebar-link" href="/salary-list">
+                    <i class="align-middle" data-feather="dollar-sign"></i> <span
+                        class="align-middle">Penghasilan</span>
+                </a>
+            </li>
+            {{ else }}
+            <li class="sidebar-header">
+                Menu
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/home") (eq .currentPath "/pages-profile") (eq .currentPath "/edit-profile") (eq .currentPath "/change-password") }}active{{ end }}">
+                <a class="sidebar-link" href="/home">
+                    <i class="align-middle" data-feather="home"></i> <span class="align-middle">Beranda</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if eq .currentPath "/attendance-submit" }} active {{ end }}">
+                <a class="sidebar-link" href="/attendance-submit">
+                    <i class="align-middle" data-feather="log-in"></i> <span
+                        class="align-middle">Kehadiran</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if eq .currentPath "/leave-submit" }} active {{ end }}">
+                <a class="sidebar-link" href="/leave-submit">
+                    <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">Cuti</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if eq .currentPath "/slip-list" }} active {{ end }}">
+                <a class="sidebar-link" href="/slip-list">
+                    <i class="align-middle" data-feather="dollar-sign"></i> <span
+                        class="align-middle">Penghasilan</span>
+                </a>
+            </li>
+            {{ end }}
+        </ul>
+
+    </div>
+</aside>
+{{ end }}

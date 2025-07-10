@@ -1,0 +1,275 @@
+{{ define "title" }}
+    Leave Request
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="row">
+        <div class="col-12 col-lg-5">
+            <div class="mb-3">
+                <h1 class="h3 d-inline align-middle">Pengajuan Cuti</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="/leave-submit" method="POST">
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">Tipe Cuti<span
+                                                        class="text-danger">*</span></label>
+                            </div>
+                            <div class="col-md-9 mb-3">
+                                <select class="form-select {{ if .validation.LeaveTypeId }} is-invalid {{ end }}" name="leave_type_id" id="leaveTypeSelect" onchange="setJumlahHari()">
+                                    <option value="">Pilih tipe cuti</option>
+                                    {{ range .leaveType }}
+                                    <option value="{{ .Id }}" data-max-day="{{ .MaxDay }}" {{ if eq
+                                                        $.leave.LeaveTypeId (printf "%d" .Id) }}selected{{ end }}>
+                                        {{ .Name }} - Maks {{ .MaxDay }} hari
+                                    </option>
+                                    {{ end }}
+                                </select>
+                                <div class="invalid-feedback">
+                                    {{ .validation.LeaveTypeId }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Tanggal<span class="text-danger">*</span></label>
+                            </div>
+
+                            <div class="col-md-9" id="tanggal-container">
+                                {{ if .validation.LeaveDate }}
+                                <div class="invalid-feedback d-block">
+                                    {{ .validation.LeaveDate }}
+                                </div>
+                                {{ end }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3 row">
+                            <label class="col-md-3 col-form-label">Lampiran</label>
+                            <div class="col-md-9">
+                                <input type="file"
+                                                    class="form-control {{ if .validation.Attachment }} is-invalid {{ end }}"
+                                                    name="foto" accept="image/*" onchange="previewFoto(event)">
+                                <input type="hidden" name="attachment_photo" id="photoBase64"
+                                                    value="{{ .leave.Attachment }}">
+                                <img id="fotoPreview" class="preview-img img-thumbnail d-none"
+                                                    alt="Preview Foto" style="max-width: 200px;">
+                                <div class=" invalid-feedback">
+                                    {{ .validation.Attachment}}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label">Alasan<span
+                                                        class="text-danger">*</span></label>
+                            </div>
+                            <div class="col-md-9">
+                                <textarea name="reason"
+                                                    class="form-control {{ if .validation.Reason }} is-invalid {{ end }}"
+                                                    rows="2" placeholder="Alasan cuti">{{.leave.Reason}}</textarea>
+                                <div class="invalid-feedback">
+                                    {{ .validation.Reason}}
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100">Ajukan Cuti</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+
+            <div class="mb-3">
+                <h1 class="h3 d-inline align-middle">Riwayat Cuti</h1>
+            </div>
+
+            <div class="card flex-fill">
+                <div class="card-body">
+
+                    {{ if .errorList }}
+                    <div class="alert alert-danger">
+                        {{ .errorList }}
+                    </div>
+                    {{ end }}
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="todayLeave" onclick="filterTodayLeave(this)" {{ if .todayLeave }} checked {{ end }}>
+                                <label class="form-check-label" for="todayLeave">
+                                                    Kehadiran Hari Ini
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <select class="form-select mb-3" id="monthSelect" onchange="changeMonth(this)">
+                                {{range .months}}
+                                <option value="{{.}}" {{if eq . $.selectedMonth}}selected{{end}}>{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="leaveTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>Diajukan pada</th>
+                                    <th>Tipe Cuti</th>
+                                    <th>Tanggal Cuti</th>
+                                    <th>Status</th>
+                                    <th>Diproses pada</th>
+                                    <th>Catatan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range .leaves}}
+                                <tr>
+                                    <td>{{.CreatedAt.Format "02 Jan 2006"}}</td>
+                                    <td>{{.LeaveTypeName}}</td>
+                                    <td>{{.LeaveDateJoin}}</td>
+                                    <td>
+                                        {{ if eq .Status 1 }}
+                                        <span class="badge bg-warning">Menunggu</span>
+                                        {{ else if eq .Status 2 }}
+                                        <span class="badge bg-success">Disetujui</span>
+                                        {{ else if eq .Status 3 }}
+                                        <span class="badge bg-danger">Ditolak</span>
+                                        {{ else }}
+                                        <span class="badge bg-secondary">Tidak diketahui</span>
+                                        {{ end }}
+                                    </td>
+                                    <td>
+                                        {{if .UpdatedAt.Valid}}
+                                        {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                        {{else}}
+                                                        -
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .ReasonStatus.Valid}}
+                                        {{.ReasonStatus.String}}
+                                        {{else}}
+                                                        -
+                                        {{end}}
+                                    </td>
+                                </tr>
+                                {{ end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+    <script>
+        function handleTanggalChange(input) {
+            const container = document.getElementById("tanggal-container");
+            const inputs = container.querySelectorAll('input[type="date"]');
+
+            // Jika input dikosongkan dan masih ada lebih dari satu input, hapus input tersebut
+            if (input.value === "") {
+                if (inputs.length > 1) {
+                    container.removeChild(input);
+                }
+                return; // Tidak perlu lanjutkan ke penambahan input baru
+            }
+
+            // Jika input terakhir diisi, tambahkan input baru
+            const lastInput = inputs[inputs.length - 1];
+            if (input === lastInput) {
+                const newInput = document.createElement("input");
+                newInput.type = "date";
+                newInput.name = "leave_date[]";
+                newInput.className = "form-control mb-2";
+                newInput.onchange = function () {
+                    handleTanggalChange(newInput);
+                };
+                container.appendChild(newInput);
+            }
+        }
+
+        function previewFoto(event) {
+            const input = event.target;
+            const preview = document.getElementById('fotoPreview');
+            const base64Input = document.getElementById('photoBase64');
+            const file = input.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove("d-none");
+                    base64Input.value = e.target.result.split(',')[1]; // Set base64 ke input hidden
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Jika tidak ada file yang dipilih, set nilai base64 menjadi null
+                base64Input.value = null;
+                preview.classList.add("d-none");
+            }
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            const photoBase64 = document.getElementById('photoBase64').value;
+            const preview = document.getElementById('fotoPreview');
+
+            if (photoBase64) {
+                preview.src = "data:image/jpeg;base64," + photoBase64;
+                preview.classList.remove("d-none");
+            }
+        });
+
+        function setJumlahHari() {
+            const select = document.getElementById('leaveTypeSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            const maxDay = parseInt(selectedOption.getAttribute('data-max-day')) || 0;
+
+            const container = document.getElementById('tanggal-container');
+
+            // Bersihkan input sebelumnya (kecuali validasi jika ada)
+            container.querySelectorAll('input[type="date"]').forEach(input => input.remove());
+
+            // Tambahkan input sebanyak maxDay
+            for (let i = 0; i < maxDay; i++) {
+                const input = document.createElement('input');
+                input.type = 'date';
+                input.name = 'leave_date[]';
+                input.className = 'form-control mb-2';
+                container.appendChild(input);
+            }
+        }
+
+        // Inisialisasi jika form reload (validasi gagal)
+        window.onload = setJumlahHari;
+
+        $(document).ready(function () {
+            $('#leaveTable').DataTable({
+                ordering: false, // matikan fitur sorting
+                pageLength: 25
+            });
+        });
+
+        function changeMonth(select) {
+            window.location.href = '?month=' + encodeURIComponent(select.value);
+        }
+
+        function filterTodayLeave(checkbox) {
+            if (checkbox.checked) {
+                window.location.href = '?today_leave=true';
+            } else {
+                window.location.href = '?today_leave=false';
+            }
+        }
+    </script>
+{{ end }}

@@ -1,0 +1,161 @@
+{{ define "title" }}
+Persetujuan Pengajuan Cuti Karyawan
+{{ end }}
+
+{{ define "css_extra" }}
+    <style>
+        .container {
+            max-width: 500px;
+        }
+    </style>
+{{ end }}
+
+{{ define "content" }}
+    <div class="container-fluid container p-0">
+        <div class="card">
+            <div class="card-header">
+                <a href="/leave-list" class="d-flex align-items-center">
+                    <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                    <h3 class="ms-2 mb-0 text-dark">Persetujuan Cuti</h3>
+                </a>
+            </div>
+            <div class="card-body">
+                <form action="/leave/approval?id={{.leave.Id}}" method="POST">
+
+                    <input type="hidden" value="{{.leave.Id}}" name="id">
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                        </div>
+                        <div class="col-md-9">
+                            {{ if eq .leave.Status 1 }}
+                            <span class="badge bg-warning fs-6">Menunggu Persetujuan</span>
+                            {{ else if eq .leave.Status 2 }}
+                            <span class="badge bg-success fs-6">Disetujui</span>
+                            {{ else if eq .leave.Status 3 }}
+                            <span class="badge bg-danger fs-6">Ditolak</span>
+                            {{ else }}
+                            <span class="badge bg-secondary fs-6">Tidak diketahui</span>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Diajukan Oleh</label>
+                        </div>
+                        <div class="col-md-9">
+                            <h5>{{ .leave.Name }} - ( {{ .leave.NIK }} )</h5>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Diajukan Pada</label>
+                        </div>
+                        <div class="col-md-9">
+                            <h5>{{ .leave.CreatedAt.Format "02 Jan 2006"}}</h5>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Tipe Cuti</label>
+                        </div>
+                        <div class="col-md-9">
+                            <h5>{{ .leave.LeaveTypeName }}</h5>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label">Tanggal Cuti</label>
+                        </div>
+                        <div class="col-md-9">
+                            {{range .leave.LeaveDate}}
+                            <h5 class="mb-3" style="color: red;">{{.Format " 02 Jan 2006"}}</h5>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Alasan</label>
+                        </div>
+                        <div class="col-md-9">
+                            <h5>{{ .leave.Reason }}</h5>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Lampiran</label>
+                        </div>
+                        <div class="col-md-9">
+                            {{ if .leave.Attachment.Valid }}
+                            <img src="data:image/jpeg;base64,{{.leave.Attachment.String}}" alt="Foto Lampiran"
+                                class="img-thumbnail" style="height: 200px; width: 200px; object-fit: cover;">
+                            {{ else }}
+                            <img src="https://placehold.co/60x60" alt="Foto Kosong" class="img-thumbnail"
+                                style="height: 120px; width: 120px; object-fit: cover;">
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    {{if eq .leave.Status 1}}
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input {{if .validation.Status}}is-invalid{{end}}" type="radio"
+                                    name="status" id="inlineRadio1" value="2" {{if eq .approval.Status 2}}checked{{end}}>
+                                <label class="form-check-label" for="inlineRadio1">Approve</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input {{if .validation.Status}}is-invalid{{end}}" type="radio"
+                                    name="status" id="inlineRadio2" value="3" {{if eq .approval.Status 3}}checked{{end}}>
+                                <label class="form-check-label" for="inlineRadio2">Reject</label>
+                            </div>
+                            {{if .validation.Status}}
+                            <div class="invalid-feedback d-block">
+                                {{.validation.Status}}
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Catatan dari admin</label>
+                        </div>
+                        <div class="col-md-9">
+                            <textarea class="form-control {{ if .validation.ReasonStatus }} is-invalid {{ end }}" rows="3"
+                                placeholder="Tambahkan catatan" name="reason_status">{{.approval.ReasonStatus}}</textarea>
+                            <div class="invalid-feedback">
+                                {{ .validation.ReasonStatus }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Proses</button>
+
+                    {{end}}
+
+                </form>
+            </div>
+        </div>
+    </div>
+{{ end }}
+
+
+{{ define "js_extra" }}
+    <script>
+        function setStatus(value) {
+            document.getElementById('statusInput').value = value;
+        }
+    </script>
+{{ end }}

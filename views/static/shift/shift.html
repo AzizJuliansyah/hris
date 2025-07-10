@@ -1,0 +1,92 @@
+{{ define "title" }}
+    List Shift
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="row mb-2">
+        <div class="col">
+            <h1 class="h3 mb-3">List Shift</h1>
+        </div>
+        <div class="col text-end">
+            <a class="btn btn-primary" href="/shift/add-shift"> <i class="align-middle me-1" data-feather="sun"></i> Tambah Shift</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 d-flex">
+            <div class="card flex-fill">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="shiftTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Jam Masuk</th>
+                                    <th>Jam Pulang</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range .shift }}
+                                <tr>
+                                    <td>{{ .Name }}</td>
+                                    <td>{{ .StartTime }}</td>
+                                    <td>{{ .EndTime }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <a href="/shift/edit-shift?id={{.Id}}" class="btn btn-warning btn-sm">Edit</a>
+                                            </div>
+                                            <div class="mx-1">
+                                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#hapusShift{{ .Id }}">
+                                                    Hapus
+                                                </button>
+                                                
+                                                <div class="modal fade" id="hapusShift{{ .Id }}" tabindex="-1" aria-labelledby="hapusShift{{ .Id }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h1 class="modal-title fs-5" id="hapusShift{{ .Id }}Label">Hapus Shift {{ .Name }}</h1>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="form-group">
+                                                                        <img src="/images/logo_danger_2.png" class="img-fluid mr-2" width="120">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <h6>Apakah anda yakin ingin menghapus shift ini?</h6>
+                                                                        <span>Shift ini akan <span class="text-danger">dihapus secara permanen</span> dan tidak dapat dikembalikan lagi.</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="float-end">
+                                                                    <a href="/shift/delete-shift?id={{.Id}}" class="btn btn-outline-danger mx-1">Hapus Shift</a>
+                                                                    <button type="button" class="btn btn-outline-white mx-1" data-dismiss="modal">Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function () {
+        $('#shiftTable').DataTable();
+    });
+</script>
+{{ end }}

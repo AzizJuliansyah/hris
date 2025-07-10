@@ -1,0 +1,64 @@
+{{ define "title" }}
+    Edit Data Employee
+{{ end }}
+
+{{ define "content" }}
+    <div class="container-fluid p-0">
+        <div class="row">
+            <div class="col-12 col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Slip Gaji</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="slipTable" class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Bulan</th>
+                                        <th>Tanggal Terbit</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{range .salarySlips}}
+                                    <tr>
+                                        <td>{{.FormattedPeriod}}</td>
+                                        <td>{{.CreatedAt.Time.Format "02 January 2006 15:04"}}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="mx-1">
+                                                    <a href="/salary/download-slip?id={{.Id}}" target="_blank" class="text-primary">
+                                                        <i data-feather="download"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{{ end }}
+
+{{ define "js_extra" }}
+    <script>
+        $(document).ready(function () {
+            $('#slipTable').DataTable({
+                ordering: false, // matikan fitur sorting
+                pageLength: 25
+            });
+        });
+        
+        function changeMonth(select) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('month', select.value);
+            window.location.search = urlParams.toString();
+        }
+    </script>
+{{ end }}

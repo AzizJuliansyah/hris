@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Penghasilan - HRIS IDN</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/app.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="wrapper">
+        <nav id="sidebar" class="sidebar js-sidebar">
+            <div class="sidebar-content js-simplebar">
+                <a class="sidebar-brand" href="index.html">
+                    <span class="align-middle">HRIS IDN</span>
+                </a>
+
+                <ul class="sidebar-nav">
+                    <li class="sidebar-header">
+                        Menu Admin
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/home-admin">
+                            <i class="align-middle" data-feather="home"></i> <span class="align-middle">Beranda</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/news">
+                            <i class="align-middle" data-feather="globe"></i> <span class="align-middle">News</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/employee">
+                            <i class="align-middle" data-feather="users"></i> <span class="align-middle">Karyawan</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/office">
+                            <i class="align-middle" data-feather="map"></i> <span class="align-middle">Kantor</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/shift">
+                            <i class="align-middle" data-feather="sun"></i> <span class="align-middle">Shift</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/attendance-list">
+                            <i class="align-middle" data-feather="log-in"></i> <span
+                                class="align-middle">Kehadiran</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/leave-list">
+                            <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">Cuti</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/payroll-list">
+                            <i class="align-middle" data-feather="dollar-sign"></i> <span
+                                class="align-middle">Penghasilan</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-header">
+                        Menu
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/home">
+                            <i class="align-middle" data-feather="home"></i> <span class="align-middle">Beranda</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/attendance-submit">
+                            <i class="align-middle" data-feather="log-in"></i> <span
+                                class="align-middle">Kehadiran</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/leave-submit">
+                            <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">Cuti</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-item active">
+                        <a class="sidebar-link" href="/payroll-self">
+                            <i class="align-middle" data-feather="dollar-sign"></i> <span
+                                class="align-middle">Penghasilan</span>
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+        </nav>
+
+        <div class="main">
+            <nav class="navbar navbar-expand navbar-light navbar-bg">
+                <a class="sidebar-toggle js-sidebar-toggle">
+                    <i class="hamburger align-self-center"></i>
+                </a>
+
+                <div class="navbar-collapse collapse">
+                    <ul class="navbar-nav navbar-align">
+                        <li class="nav-item dropdown">
+                            <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#"
+                                data-bs-toggle="dropdown">
+                                <i class="align-middle" data-feather="settings"></i>
+                            </a>
+                            <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#"
+                                data-bs-toggle="dropdown">
+                                <img src="/static/img/avatars/avatar.jpg" class="avatar img-fluid rounded me-1"
+                                    alt="Charles Hall" /> <span class="text-dark">Charles Hall</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="dropdown-item" href="pages-profile.html"><i class="align-middle me-1"
+                                        data-feather="user"></i> Profile</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Log out</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="content">
+                <div class="container-fluid p-0">
+                    <div class="row">
+                        <div class="col-12 col-lg-6">
+                            <div class="mb-3">
+                                <h1 class="h3 d-inline align-middle">Rincian Penghasilan</h1>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Gaji Pokok</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control mb-2" placeholder="Rp. 5.000.000"
+                                                disabled>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Uang Makan</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control mb-2"
+                                                placeholder="Rp. 20.000/kehadiran" disabled>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Uang Transport</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control mb-2"
+                                                placeholder="Rp. 30.000/kehadiran" disabled>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Tunjangan Jabatan</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="text" class="form-control mb-2" placeholder="Rp. 1.000.000"
+                                                disabled>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6">
+
+                            <div class="mb-3">
+                                <h1 class="h3 d-inline align-middle">Slip Penghasilan</h1>
+                            </div>
+
+                            <div class="card flex-fill">
+                                <div class="card-body">
+                                    <select class="form-select mb-3">
+                                        <option selected>April 2025</option>
+                                        <option>Maret 2025</option>
+                                        <option>Februari 2025</option>
+                                        <option>Januari 2025</option>
+                                    </select>
+                                    <iframe src="https://pdfobject.com/pdf/sample.pdf" style="border:none;" width="100%"
+                                        height="600px"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="col-6 text-start">
+                        <p class="mb-0">
+                            <a class="text-muted" href="https://idn.id"
+                                target="_blank"><strong>ID-Networkers</strong></a>
+                            &copy;
+                        </p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+
+</body>
+
+</html>

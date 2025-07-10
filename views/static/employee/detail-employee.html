@@ -1,0 +1,314 @@
+{{ define "title" }}
+Karyawan
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <a href="/employee" class="d-flex align-items-center">
+        <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+        <h3 class="ms-2 mb-0 text-dark">Detail Karyawan</h3>
+    </a>
+    <div class="row">
+		<div class="col-12 col-md-3">
+			<div class="card mb-3">
+				<div class="card-header">
+					<h5 class="card-title mb-0">Profile</h5>
+				</div>
+				<div class="card-body text-center">
+					<img src="{{ .employeePhoto }}" alt="{{ .employee.Name }} Photo Profile" class="img-fluid rounded mb-2" width="128" height="128" />
+					<h5 class="card-title mb-0">{{ .employee.Name }}</h5>
+                    {{ if eq .employee.IsAdmin true }}
+                        <span class="badge bg-success">Admin</span>
+                    {{ else }}
+                        <span class="badge bg-warning">Karyawan</span>
+                    {{ end }}
+				</div>
+				<hr class="my-0" />
+				<div class="card-body">
+					<h5 class="h6 card-title">About</h5>
+					<ul class="list-unstyled mb-0">
+						<li class="mb-1">
+							<span data-feather="mail" class="feather-sm me-1"></span> Email 
+							<p class="text-primary mb-2">{{ .employee.Email }}</p>
+						</li>
+						<li class="mb-1">
+							<span data-feather="phone" class="feather-sm me-1"></span> Phone Number
+							<p class="text-primary mb-2">{{ .employee.Phone }}</p>
+						</li>
+						<hr class="mx-0" />
+						<li class="mb-1">
+							<span data-feather="user" class="feather-sm me-1"></span> Gender 
+							{{ if eq .employee.Gender "M" }}
+								<p class="text-primary mb-2">Male</p>
+							{{ else if eq .employee.Gender "F" }}
+								<p class="text-primary mb-2">Female</p>
+							{{ else }}
+								<p class="text-danger mb-2">Undefined</p>
+							{{ end }}
+						</li>
+						<li class="mb-1">
+							<span data-feather="calendar" class="feather-sm me-1"></span> Birth Date 
+							<p class="text-primary mb-2">{{ .birthDateFormat }}</p>
+						</li>
+						<li class="mb-1">
+							<span data-feather="calendar" class="feather-sm me-1"></span> Address 
+							<p class="text-primary mb-2">{{ .employee.Address }}</p>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+        <div class="col-12 col-md-9">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Riwayat Kehadiran</h5>
+                </div>
+                <div class="card-body">
+                    {{ if .errorList }}
+                    <div class="alert alert-danger">
+                        {{ .errorList }}
+                    </div>
+                    {{ end }}
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="todayAttendance" onclick="filterTodayAttendance(this)" {{ if .todayAttendance }} checked {{ end }}>
+                                <label class="form-check-label" for="todayAttendance">
+                                    Kehadiran Hari Ini
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <select class="form-select mb-3" id="monthSelect" onchange="changeMonthAttendance(this)">
+                                {{range .months}}
+                                <option value="{{.}}" {{if eq . $.selectedAttendanceMonth}}selected{{end}}>{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="attendanceTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status Check In</th>
+                                    <th>Status Check Out</th>
+                                    <th>Kantor</th>
+                                </tr>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .attendances}}
+                                <tr>
+                                    <td>{{.FormattedDate}}</td>
+                                    <td>{{.CheckInTime.Format "15:04:05"}}</td>
+                                    <td>
+                                        {{if .CheckOutTime.Valid}}
+                                        {{.CheckOutTime.Time.Format "15:04:05"}}
+                                        {{else}}
+                                        -
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .IsLate}}
+                                        <span class="badge bg-danger">Terlambat</span>
+                                        {{else}}
+                                        <span class="badge bg-success">Tepat Waktu</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .CheckOutTime.Valid}}
+                                        {{if .IsEarly.Valid}}
+                                        {{if .IsEarly.Bool}}
+                                        <span class="badge bg-danger">Pulang Awal</span>
+                                        {{else}}
+                                        <span class="badge bg-success">Tepat Waktu</span>
+                                        {{end}}
+                                        {{else}}
+                                        <span class="badge bg-secondary">Status Tidak Diketahui</span>
+                                        {{end}}
+                                        {{else}}
+                                        <span class="badge bg-secondary">Belum Check Out</span>
+                                        {{end}}
+                                    </td>
+                                    <td>{{.OfficeName}}</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Riwayat Pengajuan Cuti</h5>
+                </div>
+                <div class="card-body">
+
+                    {{ if .errorList }}
+                    <div class="alert alert-danger">
+                        {{ .errorList }}
+                    </div>
+                    {{ end }}
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="todayLeave" onclick="filterTodayLeave(this)" {{ if .todayLeave }} checked {{ end }}>
+                                <label class="form-check-label" for="todayLeave">
+                                    Pengajuan Hari Ini
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <select class="form-select mb-3" id="monthSelect" onchange="changeMonthLeave(this)">
+                                {{range .months}}
+                                <option value="{{.}}" {{if eq . $.selectedLeaveMonth}}selected{{end}}>{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="leaveTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>Diajukan pada</th>
+                                    <th>Tipe Cuti</th>
+                                    <th>Tanggal Cuti</th>
+                                    <th>Status</th>
+                                    <th>Diproses pada</th>
+                                    <th>Catatan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range .leaves}}
+                                <tr>
+                                    <td>{{.CreatedAt.Format "02 Jan 2006"}}</td>
+                                    <td>{{.LeaveTypeName}}</td>
+                                    <td>{{.LeaveDateJoin}}</td>
+                                    <td>
+                                        {{ if eq .Status 1 }}
+                                        <span class="badge bg-warning">Menunggu</span>
+                                        {{ else if eq .Status 2 }}
+                                        <span class="badge bg-success">Disetujui</span>
+                                        {{ else if eq .Status 3 }}
+                                        <span class="badge bg-danger">Ditolak</span>
+                                        {{ else }}
+                                        <span class="badge bg-secondary">Tidak diketahui</span>
+                                        {{ end }}
+                                    </td>
+                                    <td>
+                                        {{if .UpdatedAt.Valid}}
+                                        {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                        {{else}}
+                                        -
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .ReasonStatus.Valid}}
+                                        {{.ReasonStatus.String}}
+                                        {{else}}
+                                        -
+                                        {{end}}
+                                    </td>
+                                </tr>
+                                {{ end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <h4 class="mb-0">Slip Gaji</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="slipTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Bulan</th>
+                                    <th>Tanggal Terbit</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .salarySlips}}
+                                <tr>
+                                    <td>{{.FormattedPeriod}}</td>
+                                    <td>{{.CreatedAt.Time.Format "02 January 2006 15:04"}}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <a href="/salary/download-slip?id={{.Id}}" target="_blank" class="text-primary">
+                                                    <i data-feather="download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+	</div>
+</div>
+{{ end }}
+
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function () {
+        $('#attendanceTable').DataTable({
+            ordering: false,
+            pageLength: 10
+        });
+    });
+    $(document).ready(function () {
+        $('#leaveTable').DataTable({
+            ordering: false,
+            pageLength: 10
+        });
+    });
+    $(document).ready(function () {
+        $('#slipTable').DataTable({
+            ordering: false,
+            pageLength: 10
+        });
+    });
+
+    function changeMonthAttendance(select) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('month_attendance', select.value); // tambahkan/ubah parameter bulan
+        window.location.search = params.toString();
+    }
+
+    function filterTodayAttendance(checkbox) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('today_attendance', checkbox.checked ? 'true' : 'false'); // ubah param filter
+        window.location.search = params.toString();
+    }
+
+    function changeMonthLeave(select) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('month_leave', select.value); // tambahkan/ubah parameter bulan
+        window.location.search = params.toString();
+    }
+
+    function filterTodayLeave(checkbox) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('today_leave', checkbox.checked ? 'true' : 'false'); // ubah param filter
+        window.location.search = params.toString();
+    }
+</script>
+{{ end }}

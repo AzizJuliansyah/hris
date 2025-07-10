@@ -1,0 +1,99 @@
+{{ define "title" }}
+Employee Salary List
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <h1 class="h3 d-inline align-middle">Penghasilan Karyawan</h1>
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col">
+                    <h5 class="card-title">Daftar Penghasilan Karyawan</h5>
+                </div>
+                <div class="col text-end">
+                    <a class="btn btn-primary" href="/salary/input-salary"> <i class="align-middle me-1" data-feather="edit-2"></i> Input Gaji Karyawan</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="salaryTable" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">NIK</th>
+                            <th scope="col">Nama Karyawan</th>
+                            <th scope="col">Gaji Bulanan</th>
+                            <th scope="col">Gaji Harian</th>
+                            <th scope="col">Tunjangan Makan</th>
+                            <th scope="col">Tunjangan Transport</th>
+                            <th scope="col">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range .salaries }}
+                        <tr>
+                            <td>{{ .NIK }}</td>
+                            <td>{{ .EmployeeName }}</td>
+                            <td>{{ if .Monthly_Wages.Valid }}{{ .Monthly_Wages.String }}{{ else }}-{{ end }}</td>
+                            <td>{{ if .Daily_Wages.Valid }}{{ .Daily_Wages.String }}{{ else }}-{{ end }}</td>
+                            <td>{{ if .Meal_Allowance.Valid }}{{ .Meal_Allowance.String }}{{ else }}-{{ end }}</td>
+                            <td>{{ if .Transport_Allowance.Valid }}{{ .Transport_Allowance.String }}{{ else }}-{{ end }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="mx-1">
+                                        <a href="/salary/detail-salary?id={{.Id}}" class="btn btn-primary btn-sm">Detail</a>
+                                    </div>
+                                    <div class="mx-1">
+                                        <a href="/salary/edit-salary?id={{.Id}}" class="btn btn-warning btn-sm">Edit</a>
+                                    </div>
+                                    <div class="mx-1">
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#hapussalary{{ .Id }}">
+                                            Hapus
+                                        </button>
+                                        
+                                        <div class="modal fade" id="hapussalary{{ .Id }}" tabindex="-1" aria-labelledby="hapussalary{{ .Id }}Label" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header border-bottom-0">
+                                                        <h1 class="modal-title fs-5" id="hapussalary{{ .Id }}Label">Hapus salary {{ .EmployeeName }}</h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="form-group">
+                                                                <img src="/images/logo_danger_2.png" class="img-fluid mr-2" width="120">
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <h6>Apakah anda yakin ingin menghapus salary ini?</h6>
+                                                                <span>Salary ini akan <span class="text-danger">dihapus secara permanen</span> dan tidak dapat dikembalikan lagi.</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="float-end">
+                                                            <a href="/salary/delete-salary?id={{.Id}}" class="btn btn-outline-danger mx-1">Hapus salary</a>
+                                                            <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+    <script>
+        $(document).ready(function () {
+            $('#salaryTable').DataTable();
+        });
+    </script>
+{{ end }}
