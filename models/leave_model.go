@@ -135,7 +135,8 @@ func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly boo
 			le.created_at,
 			le.updated_at,
 			em.name AS employee_name,
-			admin.name AS admin_name
+			admin.name AS admin_name,
+			em.uuid AS employee_uuid
 		FROM leave_employee le
 		LEFT JOIN leave_type lt ON le.leave_type_id = lt.id
 		LEFT JOIN employee em ON le.nik = em.nik
@@ -143,7 +144,6 @@ func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly boo
 		WHERE le.deleted_at IS NULL
 		AND MONTH(le.created_at) = ?
 		AND YEAR(le.created_at) = ?
-
 	`
 
 	args = []interface{}{parsedDate.Month(), parsedDate.Year()}
@@ -180,6 +180,7 @@ func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly boo
 			&leave.UpdatedAt,
 			&leave.EmployeeName,
 			&adminName,
+			&leave.UUID,
 		)
 		if err != nil {
 			return nil, err

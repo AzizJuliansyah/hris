@@ -40,6 +40,7 @@
                                     <th>Status Check In</th>
                                     <th>Status Check Out</th>
                                     <th>Kantor</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -80,6 +81,13 @@
                                         {{end}}
                                     </td>
                                     <td>{{.OfficeName}}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <a href="/employee/detail-employee?uuid={{.EmployeeUUID}}" class="btn btn-info btn-sm">Lihat Karyawan</a>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {{end}}
                             </tbody>

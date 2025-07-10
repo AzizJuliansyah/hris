@@ -25,6 +25,7 @@ type Attendance struct {
 	OfficeName        string
 	FormattedDate     string
 	EmployeeName      string
+	EmployeeUUID      string
 	ShiftName         string
 	ShiftStartTime    string
 	ShiftEndTime      string
