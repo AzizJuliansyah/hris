@@ -83,23 +83,23 @@
             </tr>
             <tr>
                 <td>Gaji Bulanan</td>
-                <td>Rp {{ .slip.Monthly_Wages_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Monthly_Wages_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr>
                 <td>Gaji Harian x Hari Masuk</td>
-                <td>Rp {{ .slip.Daily_Wages_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Daily_Wages_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Makan x Hari Masuk</td>
-                <td>Rp {{ .slip.Meal_Allowance_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Meal_Allowance_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Transport x Hari Masuk</td>
-                <td>Rp {{ .slip.Transport_Allowance_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Transport_Allowance_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr class="total">
                 <td>Total Gaji</td>
-                <td>Rp {{ .slip.Salary_Total.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Salary_Total.Int64 | formatIDR }}</td>
             </tr>
         </table>
 

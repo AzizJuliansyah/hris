@@ -17,8 +17,34 @@ import (
 	"time"
 )
 
+func humanizeIDR(n int64) string {
+	str := fmt.Sprintf("%d", n)
+	var result []string
+	for len(str) > 3 {
+		result = append([]string{str[len(str)-3:]}, result...)
+		str = str[:len(str)-3]
+	}
+	if len(str) > 0 {
+		result = append([]string{str}, result...)
+	}
+	return strings.Join(result, ".") + ",00"
+}
+
+func toInt64(s string) int64 {
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
 func ListSalary(httpWriter http.ResponseWriter, request *http.Request) {
-	templateLayout := template.Must(template.ParseFiles(
+	funcMap := template.FuncMap{
+		"formatIDR": humanizeIDR,
+		"toInt64":   toInt64,
+	}
+
+	templateLayout := template.Must(template.New("base").Funcs(funcMap).ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
 		"views/static/layouts/navbar.html",
@@ -55,19 +81,11 @@ func ListSalary(httpWriter http.ResponseWriter, request *http.Request) {
 }
 
 func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
-	templateLayout := template.New("base").Funcs(template.FuncMap{
-		"formatNumber": func(n int64) string {
-			return strconv.FormatInt(n, 10)
-		},
-		"formatPeriod": func(period string) string {
-			t, err := time.Parse("2006-01", period)
-			if err != nil {
-				return period // fallback jika gagal parse
-			}
-			return t.Format("January 2006")
-		},
-	})
-	templateLayout = template.Must(templateLayout.ParseFiles(
+	funcMap := template.FuncMap{
+		"formatIDR": humanizeIDR,
+	}
+
+	templateLayout := template.Must(template.New("base").Funcs(funcMap).ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
 		"views/static/layouts/navbar.html",
@@ -249,21 +267,7 @@ func SlipListEmployeeSalary(httpWriter http.ResponseWriter, request *http.Reques
 }
 
 
-func humanizeComma(n int64) string {
-	s := strconv.FormatInt(n, 10)
-	if len(s) <= 3 {
-		return s
-	}
-	var result []string
-	for len(s) > 3 {
-		result = append([]string{s[len(s)-3:]}, result...)
-		s = s[:len(s)-3]
-	}
-	if s != "" {
-		result = append([]string{s}, result...)
-	}
-	return strings.Join(result, ",")
-}
+
 
 
 func DownloadEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request) {
@@ -286,9 +290,7 @@ func DownloadEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request)
 	data["slip"] = slip
 
 	funcMap := template.FuncMap{
-		"formatNumber": func(n int64) string {
-			return humanizeComma(n)
-		},
+		"formatIDR": humanizeIDR,
 	}
 
 	tmpl, err := template.New(filepath.Base(templateLayout)).Funcs(funcMap).ParseFiles(templateLayout)
