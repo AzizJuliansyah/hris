@@ -331,13 +331,13 @@ func (model SalaryModel) EditEmployeeSalary(salary entities.EditEmployeeSalary) 
 	return err
 }
 
-func (model SalaryModel) SoftDeleteSalary(id int64) error {
+func (model SalaryModel) DeleteSalary(id int64) error {
 	query := `
 		DELETE FROM salary
 		WHERE id = ?
 	`
 
-	_, err := model.db.Exec(query, time.Now(), id)
+	_, err := model.db.Exec(query, id)
 	return err
 }
 

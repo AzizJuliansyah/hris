@@ -503,7 +503,7 @@ func DeleteEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	err := models.NewSalaryModel().SoftDeleteSalary(int64Id)
+	err := models.NewSalaryModel().DeleteSalary(int64Id)
 	if err != nil {
 		log.Println("Error deleting employee salary:", err)
 		http.Error(httpWriter, "Failed to delete salary", http.StatusInternalServerError)
