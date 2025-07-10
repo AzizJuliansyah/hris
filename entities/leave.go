@@ -36,8 +36,9 @@ type Leave struct {
 	CreatedAt     time.Time
 	UpdatedAt     sql.NullTime
 	LeaveDate     []time.Time
-	EmployeeName   string
-	AdminName      sql.NullString
+	EmployeeName  string
+	AdminName     sql.NullString
+	UUID		  string
 }
 
 type ApprovalLeave struct {

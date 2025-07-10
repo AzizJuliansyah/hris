@@ -104,20 +104,23 @@ func (model AttendanceModel) GetAttendanceList(nik string, monthYear string, tod
 
 	baseQuery := `
         SELECT 
-            a.id, a.nik, a.office_id, a.shift_id,
-            a.checkin_time, a.checkin_latitude, a.checkin_longitude,
-            a.checkin_photo, a.checkin_notes, a.checkout_time,
-            a.checkout_latitude, a.checkout_longitude, a.checkout_photo,
-            a.checkout_notes, a.is_late, a.is_early,
-            o.name as office_name, e.name as employee_name,
-            s.name as shift_name, s.start_time, s.end_time
-        FROM attendance a
-        LEFT JOIN office o ON a.office_id = o.id
-        LEFT JOIN employee e ON a.nik = e.nik
-        LEFT JOIN shift s ON a.shift_id = s.id
-        WHERE a.deleted_at IS NULL
-        AND MONTH(a.checkin_time) = ?
-        AND YEAR(a.checkin_time) = ?
+			a.id, a.nik, a.office_id, a.shift_id,
+			a.checkin_time, a.checkin_latitude, a.checkin_longitude,
+			a.checkin_photo, a.checkin_notes, a.checkout_time,
+			a.checkout_latitude, a.checkout_longitude, a.checkout_photo,
+			a.checkout_notes, a.is_late, a.is_early,
+			o.name AS office_name, 
+			e.name AS employee_name,
+			e.uuid AS employee_uuid,
+			s.name AS shift_name, s.start_time, s.end_time
+		FROM attendance a
+		LEFT JOIN office o ON a.office_id = o.id
+		LEFT JOIN employee e ON a.nik = e.nik
+		LEFT JOIN shift s ON a.shift_id = s.id
+		WHERE a.deleted_at IS NULL
+		AND MONTH(a.checkin_time) = ?
+		AND YEAR(a.checkin_time) = ?
+
     `
 
 	args = []interface{}{parsedDate.Month(), parsedDate.Year()}
@@ -146,8 +149,8 @@ func (model AttendanceModel) GetAttendanceList(nik string, monthYear string, tod
 			&att.CheckInPhoto, &att.CheckInNotes, &att.CheckOutTime,
 			&att.CheckOutLatitude, &att.CheckOutLongitude, &att.CheckOutPhoto,
 			&att.CheckOutNotes, &att.IsLate, &att.IsEarly,
-			&att.OfficeName, &att.EmployeeName, &att.ShiftName,
-			&att.ShiftStartTime, &att.ShiftEndTime,
+			&att.OfficeName, &att.EmployeeName, &att.EmployeeUUID,
+			&att.ShiftName, &att.ShiftStartTime, &att.ShiftEndTime,
 		)
 		if err != nil {
 			return nil, err

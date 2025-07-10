@@ -67,10 +67,10 @@ List Karyawan
                                     </td>
                                     <td>
                                         {{ if .Photo.Valid }}
-                                                <img src="/images/user_photo/{{ .Photo.String }}" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
-                                            {{ else }}
-                                                <img src="/images/user_default.png" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
-                                            {{ end }}
+                                            <img src="/images/user_photo/{{ .Photo.String }}" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                        {{ else }}
+                                            <img src="/images/user_default.png" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                         {{ end }}
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
