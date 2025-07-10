@@ -333,9 +333,8 @@ func (model SalaryModel) EditEmployeeSalary(salary entities.EditEmployeeSalary) 
 
 func (model SalaryModel) SoftDeleteSalary(id int64) error {
 	query := `
-		UPDATE salary
-		SET deleted_at = ?
-		WHERE id = ? AND deleted_at IS NULL
+		DELETE FROM salary
+		WHERE id = ?
 	`
 
 	_, err := model.db.Exec(query, time.Now(), id)
