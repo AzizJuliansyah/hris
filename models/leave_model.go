@@ -113,6 +113,7 @@ func (model LeaveModel) InsertLeave(data entities.SubmitLeave) error {
 
 func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly bool) ([]entities.Leave, error) {
 	var query string
+	var adminName sql.NullString
 	var args []interface{}
 
 	parsedDate, err := time.Parse("January 2006", monthYear)
@@ -133,13 +134,16 @@ func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly boo
 			le.reason_status,
 			le.created_at,
 			le.updated_at,
-			em.name
+			em.name AS employee_name,
+			admin.name AS admin_name
 		FROM leave_employee le
 		LEFT JOIN leave_type lt ON le.leave_type_id = lt.id
 		LEFT JOIN employee em ON le.nik = em.nik
+		LEFT JOIN employee admin ON le.admin_nik = admin.nik
 		WHERE le.deleted_at IS NULL
 		AND MONTH(le.created_at) = ?
 		AND YEAR(le.created_at) = ?
+
 	`
 
 	args = []interface{}{parsedDate.Month(), parsedDate.Year()}
@@ -174,10 +178,17 @@ func (model LeaveModel) GetLeaveList(nik string, monthYear string, todayOnly boo
 			&leave.ReasonStatus,
 			&leave.CreatedAt,
 			&leave.UpdatedAt,
-			&leave.Name,
+			&leave.EmployeeName,
+			&adminName,
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if adminName.Valid {
+			leave.AdminName = adminName
+		} else {
+			leave.AdminName.String = "-"
 		}
 
 		// Parse LeaveDateJoin ke []time.Time
@@ -248,7 +259,7 @@ func (model LeaveModel) GetLeaveById(id int64) (*entities.Leave, error) {
 		&leave.ReasonStatus,
 		&leave.CreatedAt,
 		&leave.UpdatedAt,
-		&leave.Name,
+		&leave.EmployeeName,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -340,11 +351,12 @@ func (model LeaveModel) CountLeaveDaysThisMonth(nik string, month time.Month, ye
 func (model LeaveModel) UpdateLeaveStatus(approvalLeave entities.ApprovalLeave) error {
 	query := `
 		UPDATE leave_employee
-		SET status = ?, reason_status = ?, updated_at = ?
+		SET admin_nik = ?, status = ?, reason_status = ?, updated_at = ?
 		WHERE id = ? AND deleted_at IS NULL
 	`
 	_, err := model.db.Exec(
 		query,
+		approvalLeave.AdminNIK,
 		approvalLeave.Status,
 		approvalLeave.ReasonStatus,
 		time.Now(),

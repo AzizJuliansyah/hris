@@ -55,7 +55,7 @@
                                 <tr>
                                     <td>{{.CreatedAt.Format "02 Jan 2006"}}</td>
                                     <td>{{.NIK}}</td>
-                                    <td>{{.Name}}</td>
+                                    <td>{{.EmployeeName}}</td>
                                     <td>{{.LeaveTypeName}}</td>
                                     <td>
                                         {{ if eq .Status 1 }}
@@ -70,7 +70,7 @@
                                     </td>
                                     <td>
                                         {{ if and .Attachment.Valid (ne .Attachment.String "")}}
-                                            <img src="data:image/jpeg;base64,{{ .Attachment.String }}" alt="Foto {{ .Name }}" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                            <img src="data:image/jpeg;base64,{{ .Attachment.String }}" alt="Foto {{ .EmployeeName }}" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
                                         {{ else }}
                                             <img src="https://placehold.co/60x60" alt="Foto Kosong" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
                                         {{ end }}
@@ -94,7 +94,7 @@
                                                     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                                                         <div class="modal-content">
                                                             <div class="modal-header border-bottom-0">
-                                                                <h1 class="modal-title fs-5" id="detail{{ .Id }}Label"><strong>Detail Pengajuan Cuti {{ .Name }}</strong></h1>
+                                                                <h1 class="modal-title fs-5" id="detail{{ .Id }}Label"><strong>Detail Pengajuan Cuti {{ .EmployeeName }}</strong></h1>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
@@ -112,7 +112,7 @@
                                                                         <h6><strong class="d-flex justify-content-between">Nama <span>:</span></strong></h6>
                                                                     </div>
                                                                     <div class="col-8">
-                                                                        <span>{{ .Name }}</span>
+                                                                        <span>{{ .EmployeeName }}</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="row mb-2">
@@ -151,7 +151,7 @@
                                                                     </div>
                                                                     <div class="col-8">
                                                                         {{ if and .Attachment.Valid (ne .Attachment.String "")}}
-                                                                            <img src="data:image/jpeg;base64,{{ .Attachment.String }}" alt="Foto {{ .Name }}" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                                                            <img src="data:image/jpeg;base64,{{ .Attachment.String }}" alt="Foto {{ .EmployeeName }}" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
 
                                                                             <a href="data:image/jpeg;base64,{{ .Attachment.String }}" download="lampiran.jpg">Download</a>
                                                                         {{ else }}
@@ -178,11 +178,11 @@
                                                                 </div>
                                                                 <div class="row mb-2">
                                                                     <div class="col-4">
-                                                                        <h6><strong class="d-flex justify-content-between">Catatan admin <span>:</span></strong></h6>
+                                                                        <h6><strong class="d-flex justify-content-between">Diproses oleh <span>:</span></strong></h6>
                                                                     </div>
                                                                     <div class="col-8">
-                                                                        {{if .ReasonStatus.Valid}}
-                                                                            {{.ReasonStatus.String}}
+                                                                        {{if .AdminName.Valid}}
+                                                                            {{ .AdminName.String }}
                                                                         {{else}}
                                                                             <span>-</span>
                                                                         {{end}}
@@ -195,6 +195,18 @@
                                                                     <div class="col-8">
                                                                         {{if .UpdatedAt.Valid}}
                                                                             {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                                                        {{else}}
+                                                                            <span>-</span>
+                                                                        {{end}}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Catatan admin <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{if .ReasonStatus.Valid}}
+                                                                            {{.ReasonStatus.String}}
                                                                         {{else}}
                                                                             <span>-</span>
                                                                         {{end}}
