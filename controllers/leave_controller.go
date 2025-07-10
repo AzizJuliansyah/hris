@@ -41,7 +41,6 @@ func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 	data["months"] = months
 
-	// Get selected month from query parameter or use current month
 	selectedMonth := request.URL.Query().Get("month")
 	if selectedMonth == "" {
 		selectedMonth = currentDate.Format("January 2006")
@@ -49,7 +48,6 @@ func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	todayLeave := request.URL.Query().Get("today_leave") == "true"
 	data["todayLeave"] = todayLeave
 
-	// tampilkan list kehadiran
 	leaveList, err := models.NewLeaveModel().GetLeaveList("", selectedMonth, todayLeave)
 	if err != nil {
 		log.Println("Error getting leave list:", err)
@@ -346,7 +344,9 @@ func ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	idStr := request.URL.Query().Get("id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	var data = make(map[string]interface{})
+	data := make(map[string]interface{})
+	session, _ := config.Store.Get(request, config.SESSION_ID)
+	sessionNIK := session.Values["nik"].(string)
 	errSession := sessiondata.SetUserSessionData(request, data)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
@@ -369,6 +369,7 @@ func ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	statusInt64, _ := strconv.ParseInt(status, 10, 64)
 	approval := entities.ApprovalLeave{
 		Id:           idInt64,
+		AdminNIK:	  sessionNIK,
 		Status:       statusInt64,
 		ReasonStatus: reason,
 		UpdatedAt:    time.Now(),
