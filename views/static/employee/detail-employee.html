@@ -9,6 +9,95 @@ Karyawan
         <h3 class="ms-2 mb-0 text-dark">Detail Karyawan</h3>
     </a>
     <div class="row">
+        <div class="col">
+			<div class="card">
+				<div class="card-body">
+					<div class="row">
+						<div class="col mt-0">
+							<h5 class="card-title">Total Absen</h5>
+						</div>
+						<div class="col-auto">
+							<div class="stat text-primary">
+								<i class="align-middle" data-feather="users"></i>
+							</div>
+						</div>
+					</div>
+					{{ if .totalAttendanceAll }}
+						<h1 class="mt-1">{{ .totalAttendanceAll }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
+					{{ end }}
+				</div>
+			</div>
+		</div>
+
+		<div class="col">
+			<div class="card">
+				<div class="card-body">
+					<div class="row">
+						<div class="col mt-0">
+							<h5 class="card-title">Absen Bulan {{ .selectedAttendanceMonth }}</h5>
+						</div>
+						<div class="col-auto">
+							<div class="stat text-primary">
+								<i class="align-middle" data-feather="coffee"></i>
+							</div>
+						</div>
+					</div>
+					{{ if .totalAttendanceThisMonth }}
+						<h1 class="mt-1">{{ .totalAttendanceThisMonth }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
+					{{ end }}
+				</div>
+			</div>
+		</div>
+
+		<div class="col">
+			<div class="card">
+				<div class="card-body">
+					<div class="row">
+						<div class="col mt-0">
+							<h5 class="card-title">Total Cuti</h5>
+						</div>
+						<div class="col-auto">
+							<div class="stat text-primary">
+								<i class="align-middle" data-feather="globe"></i>
+							</div>
+						</div>
+					</div>
+					{{ if .totalLeaveAll }}
+						<h1 class="mt-1">{{ .totalLeaveAll }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
+					{{ end }}
+				</div>
+			</div>
+		</div>
+
+		<div class="col">
+			<div class="card">
+				<div class="card-body">
+					<div class="row">
+						<div class="col mt-0">
+							<h5 class="card-title">Total Cuti Bulan {{ .selectedLeaveMonth }}</h5>
+						</div>
+						<div class="col-auto">
+							<div class="stat text-primary">
+								<i class="align-middle" data-feather="log-in"></i>
+							</div>
+						</div>
+					</div>
+					{{ if .totalLeaveThisMonth }}
+						<h1 class="mt-1">{{ .totalLeaveThisMonth }}</h1>
+					{{ else }}
+                        <h1 class="mt-1">0</h1>
+					{{ end }}
+				</div>
+			</div>
+		</div>
+    </div>
+    <div class="row">
 		<div class="col-12 col-md-3">
 			<div class="card mb-3">
 				<div class="card-header">

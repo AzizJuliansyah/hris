@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"hris/config"
 	"hris/entities"
 	"hris/helpers"
@@ -182,8 +183,15 @@ func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 	data["attendances"] = attendedList
 
+	totalAttendanceAll, totalAttendanceThisMonth, err := models.NewAttendanceModel().GetAttendanceCounts(employee.NIK, selectedAttendanceMonth)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data["totalAttendanceAll"] = totalAttendanceAll
+	data["totalAttendanceThisMonth"] = totalAttendanceThisMonth
 
-	selectedLeaveMonth := request.URL.Query().Get("leave_month")
+
+	selectedLeaveMonth := request.URL.Query().Get("month_leave")
 	if selectedLeaveMonth == "" {
 		selectedLeaveMonth = currentDate.Format("January 2006")
 	}
@@ -196,6 +204,13 @@ func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		data["errorList"] = "Error saat menampilkan list kehadiran: " + err.Error()
 	}
 	data["leaves"] = leaveList
+
+	totalLeaveAll, totalLeaveThisMonth, err := models.NewLeaveModel().GetLeaveCounts(employee.NIK, selectedLeaveMonth)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data["totalLeaveAll"] = totalLeaveAll
+	data["totalLeaveThisMonth"] = totalLeaveThisMonth
 
 	slip, errSlip := models.NewSalaryModel().GetSalarySlipsByNIK(employee.NIK)
 	if errSlip != nil {
