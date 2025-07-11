@@ -77,7 +77,7 @@ func (model SalaryModel) FindAllSalaries() ([]entities.EmployeeSalary, error) {
 
 func (model SalaryModel) GetEmployeeNameandNIK() ([]entities.Employee, error) {
 	query := `
-		SELECT nik, name FROM employee WHERE is_admin = 0 AND deleted_at IS NULL
+		SELECT nik, name FROM employee WHERE deleted_at IS NULL
 	`
 
 	rows, err := model.db.Query(query)
@@ -337,7 +337,7 @@ func (model SalaryModel) DeleteSalary(id int64) error {
 		WHERE id = ?
 	`
 
-	_, err := model.db.Exec(query, time.Now(), id)
+	_, err := model.db.Exec(query, id)
 	return err
 }
 

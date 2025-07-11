@@ -29,7 +29,7 @@ func Profile(httpWriter http.ResponseWriter, request *http.Request) {
 		"views/static/layouts/sidebar.html",
 		"views/static/layouts/footer.html",
 		"views/static/layouts/footer_js.html",
-		"views/static/pages-profile.html",
+		"views/static/user/pages-profile.html",
 	))
 
 	data := make(map[string]interface{})

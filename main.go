@@ -10,7 +10,7 @@ import (
 func main() {
 	
 	// baca file untuk resource yg ada di static (css, js, img)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("views/static"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("public/images"))))
 
 	
