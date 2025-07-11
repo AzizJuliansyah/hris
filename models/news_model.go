@@ -92,7 +92,7 @@ func (model NewsModel) FindAllNews() ([]entities.News, error) {
 		}
 
 		news.Created_at = created_atTime
-		news.Created_atFormat = monday.Format(created_atTime, "01 Januari 2006 15:04", monday.LocaleIdID)
+		news.Created_atFormat = monday.Format(created_atTime, "02 Januari 2006 15:04", monday.LocaleIdID)
 		
 		if thumbnail.Valid {
 			news.Thumbnail = thumbnail
