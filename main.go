@@ -36,6 +36,9 @@ func main() {
 	http.HandleFunc("/employee/add-employee", config.AdminOnly(controllers.AddEmployee))
 	http.HandleFunc("/employee/detail-employee", config.AdminOnly(controllers.DetailEmployee))
 	http.HandleFunc("/employee/edit-employee", config.AdminOnly(controllers.EditEmployee))
+	http.HandleFunc("/employee/soft-delete-employee", config.AdminOnly(controllers.SoftDeleteEmployee))
+	http.HandleFunc("/employee/deleted-employee", config.AdminOnly(controllers.DeletedEmployee))
+	http.HandleFunc("/employee/restore-employee", config.AdminOnly(controllers.RestoreEmployee))
 	http.HandleFunc("/employee/delete-employee", config.AdminOnly(controllers.DeleteEmployee))
 
 	// office routes

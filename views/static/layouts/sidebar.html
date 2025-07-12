@@ -23,7 +23,7 @@
                 </a>
             </li>
 
-            <li class="sidebar-item {{ if or (eq .currentPath "/employee") (eq .currentPath "/employee/detail-employee") (eq .currentPath "/employee/add-employee") (eq .currentPath "/employee/edit-employee") }} active {{ end }}">
+            <li class="sidebar-item {{ if or (eq .currentPath "/employee") (eq .currentPath "/employee/detail-employee") (eq .currentPath "/employee/add-employee") (eq  .currentPath "/employee/edit-employee") (eq  .currentPath "/employee/deleted-employee") }} active {{ end }}">
                 <a class="sidebar-link" href="/employee">
                     <i class="align-middle" data-feather="users"></i> <span class="align-middle">Karyawan</span>
                 </a>
