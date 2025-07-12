@@ -1,39 +1,32 @@
 {{ define "title" }}
-List Karyawan
+List Deleted Karyawan
 {{ end }}
 
 {{ define "content" }}
 <div class="container-fluid p-0">
     <div class="row mb-2">
         <div class="col-12 col-md-6">
-            <h1 class="h3 mb-3">List Karyawan</h1>
-        </div>
-        <div class="col-12 col-md-6 text-end">
-            <div class="d-flex-align-items-center">
-                <a class="btn btn-primary" href="/employee/add-employee"> <i class="align-middle me-1" data-feather="user-plus"></i> Tambah Karyawan</a>
-                
-                <a class="btn btn-warning" href="/employee/deleted-employee"> <i class="align-middle me-1" data-feather="user-minus"></i> Deleted Karyawan</a>
-            </div>
+            <h1 class="h3 mb-3">List Deleted Karyawan</h1>
         </div>
     </div>
 
     <div class="row">
         <div class="col-12 d-flex">
-            <div class="card flex-fill">
-                <div class="row">
-                        <div class="col-12 col-md-4 col-lg-2 m-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="adminOnly" onclick="filteradminOnly(this)" {{ if .adminOnly }} checked {{ end }}>
-                                <label class="form-check-label" for="adminOnly">Hanya Admin</label>
+                <div class="card flex-fill">
+                    <div class="row">
+                            <div class="col-12 col-md-4 col-lg-2 m-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="adminOnly" onclick="filteradminOnly(this)" {{ if .adminOnly }} checked {{ end }}>
+                                    <label class="form-check-label" for="adminOnly">Hanya Admin</label>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-12 col-md-4 col-lg-2 m-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="employeeOnly" onclick="filteremployeeOnly(this)" {{ if .employeeOnly }} checked {{ end }}>
-                                <label class="form-check-label" for="employeeOnly">Hanya Karyawan</label>
+                            <div class="col-12 col-md-4 col-lg-2 m-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="employeeOnly" onclick="filteremployeeOnly(this)" {{ if .employeeOnly }} checked {{ end }}>
+                                    <label class="form-check-label" for="employeeOnly">Hanya Karyawan</label>
+                                </div>
                             </div>
-                        </div>
-                </div>
+                    </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="employeeTable" class="table table-hover my-0">
@@ -51,7 +44,7 @@ List Karyawan
                             </thead>
                             <tbody>
                                 {{ $sessionNIK := $.sessionNIK }}
-                                {{ range .employees }}
+                                {{ range .deletedemployees }}
                                 <tr>
                                     <td>{{ .NIK }}</td>
                                     <td>{{ .Name }}</td>
@@ -77,11 +70,35 @@ List Karyawan
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="mx-1">
-                                                <a href="/employee/detail-employee?uuid={{.UUID}}" class="btn btn-primary btn-sm">Detail</a>
-                                            </div>
-                                            {{ if ne .NIK $sessionNIK }}
-                                            <div class="mx-1">
-                                                <a href="/employee/edit-employee?uuid={{.UUID}}" class="btn btn-warning btn-sm">Edit</a>
+                                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#restoreEmployee{{ .UUID }}">
+                                                    Restore
+                                                </button>
+                                                  
+                                                <div class="modal fade" id="restoreEmployee{{ .UUID }}" tabindex="-1" aria-labelledby="restoreEmployee{{ .UUID }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h1 class="modal-title fs-5" id="restoreEmployee{{ .UUID }}Label">Restore Employee {{ .Name }}</h1>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="form-group">
+                                                                        <img src="/images/logo_danger_1.png" class="img-fluid mr-2" width="120">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <h6>Apakah anda yakin ingin mengembalikan employee ini?</h6>
+                                                                        <span>Employee ini akan menjadi aktif kembali.</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="float-end">
+                                                                    <a href="/employee/restore-employee?uuid={{.UUID}}" class="btn btn-outline-warning mx-1">Restore Employee</a>
+                                                                    <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="mx-1">
                                                 <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#hapusEmployee{{ .UUID }}">
@@ -102,11 +119,11 @@ List Karyawan
                                                                     </div>
                                                                     <div class="form-group">
                                                                         <h6>Apakah anda yakin ingin menghapus employee ini?</h6>
-                                                                        <span>Employee ini akan <span class="text-danger">dihapus secara permanen</span> dan tidak dapat dikembalikan lagi.</span>
+                                                                        <span>Employee ini akan <span class="text-danger">benar benar dihapus secara permanen</span> dan tidak dapat dikembalikan lagi.</span>
                                                                     </div>
                                                                 </div>
-                                                                <div class="float-end">
-                                                                    <a href="/employee/soft-delete-employee?uuid={{.UUID}}" class="btn btn-outline-danger mx-1">Hapus Employee</a>
+                                                                <div class="float-end mt-3">
+                                                                    <a href="/employee/delete-employee?uuid={{.UUID}}" class="btn btn-outline-danger mx-1">Hapus Employee</a>
                                                                     <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
                                                                 </div>
                                                             </div>
@@ -114,7 +131,6 @@ List Karyawan
                                                     </div>
                                                 </div>
                                             </div>
-                                            {{ end }}
                                         </div>
                                     </td>
                                 </tr>
