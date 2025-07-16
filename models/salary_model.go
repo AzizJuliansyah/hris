@@ -3,9 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 )
 
@@ -13,13 +11,10 @@ type SalaryModel struct {
 	db *sql.DB
 }
 
-func NewSalaryModel() *SalaryModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+
+func NewSalaryModel(db *sql.DB) *SalaryModel {
 	return &SalaryModel{
-		db: conn,
+		db: db,
 	}
 }
 

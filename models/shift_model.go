@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 )
 
@@ -12,13 +10,9 @@ type ShiftModel struct {
 	db *sql.DB
 }
 
-func NewShiftModel() *ShiftModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database:", err)
-	}
+func NewShiftModel(db *sql.DB) *ShiftModel {
 	return &ShiftModel{
-		db: conn,
+		db: db,
 	}
 }
 

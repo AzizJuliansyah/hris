@@ -4,10 +4,18 @@ import (
 	"fmt"
 	"hris/config"
 	"hris/controllers"
+	"log"
 	"net/http"
 )
 
 func main() {
+	db, err := config.DBConnection()
+	if err != nil {
+		log.Fatal("Gagal membuat koneksi ke database:", err)
+	} else {
+		fmt.Println("Berhasil membuat koneksi ke database")
+	}
+
 	
 	// baca file untuk resource yg ada di static (css, js, img)
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
@@ -15,65 +23,74 @@ func main() {
 
 	
 	// auth routes
-	http.HandleFunc("/login", config.GuestOnly(controllers.Login))
+	authController := controllers.NewAuthController(db)
+	http.HandleFunc("/login", config.GuestOnly(authController.Login))
 	http.HandleFunc("/logout", controllers.Logout)
 
 	// user routes
-	http.HandleFunc("/pages-profile", config.AuthOnly(controllers.Profile))
+	userController := controllers.NewUserController(db)
+	http.HandleFunc("/pages-profile", config.AuthOnly(userController.Profile))
 
 	// home routes
-	http.HandleFunc("/home", config.EmployeeOnly(controllers.Home))
-	http.HandleFunc("/home-admin", config.AdminOnly(controllers.HomeAdmin))
+	homeController := controllers.NewHomeController(db)
+	http.HandleFunc("/home", config.EmployeeOnly(homeController.Home))
+	http.HandleFunc("/home-admin", config.AdminOnly(homeController.HomeAdmin))
 
 	// news routes
-	http.HandleFunc("/news", config.AdminOnly(controllers.ListNews))
-	http.HandleFunc("/news/add-news", config.AdminOnly(controllers.AddNews))
-	http.HandleFunc("/news/edit-news", config.AdminOnly(controllers.EditNews))
-	http.HandleFunc("/news/delete-news", config.AdminOnly(controllers.DeleteNews))
+	newsController := controllers.NewNewsController(db)
+	http.HandleFunc("/news", config.AdminOnly(newsController.ListNews))
+	http.HandleFunc("/news/add-news", config.AdminOnly(newsController.AddNews))
+	http.HandleFunc("/news/edit-news", config.AdminOnly(newsController.EditNews))
+	http.HandleFunc("/news/delete-news", config.AdminOnly(newsController.DeleteNews))
 	
 	// employee routes
-	http.HandleFunc("/employee", config.AdminOnly(controllers.FindAllEmployee))
-	http.HandleFunc("/employee/add-employee", config.AdminOnly(controllers.AddEmployee))
-	http.HandleFunc("/employee/detail-employee", config.AdminOnly(controllers.DetailEmployee))
-	http.HandleFunc("/employee/edit-employee", config.AdminOnly(controllers.EditEmployee))
-	http.HandleFunc("/employee/soft-delete-employee", config.AdminOnly(controllers.SoftDeleteEmployee))
-	http.HandleFunc("/employee/deleted-employee", config.AdminOnly(controllers.DeletedEmployee))
-	http.HandleFunc("/employee/restore-employee", config.AdminOnly(controllers.RestoreEmployee))
-	http.HandleFunc("/employee/delete-employee", config.AdminOnly(controllers.DeleteEmployee))
+	employeeController := controllers.NewEmployeeController(db)
+	http.HandleFunc("/employee", config.AdminOnly(employeeController.FindAllEmployee))
+	http.HandleFunc("/employee/add-employee", config.AdminOnly(employeeController.AddEmployee))
+	http.HandleFunc("/employee/detail-employee", config.AdminOnly(employeeController.DetailEmployee))
+	http.HandleFunc("/employee/edit-employee", config.AdminOnly(employeeController.EditEmployee))
+	http.HandleFunc("/employee/soft-delete-employee", config.AdminOnly(employeeController.SoftDeleteEmployee))
+	http.HandleFunc("/employee/deleted-employee", config.AdminOnly(employeeController.DeletedEmployee))
+	http.HandleFunc("/employee/restore-employee", config.AdminOnly(employeeController.RestoreEmployee))
+	http.HandleFunc("/employee/delete-employee", config.AdminOnly(employeeController.DeleteEmployee))
 
 	// office routes
-	http.HandleFunc("/office", config.AdminOnly(controllers.Office))                    
-	http.HandleFunc("/office/add-office", config.AdminOnly(controllers.AddOffice))      
-	http.HandleFunc("/office/edit-office", config.AdminOnly(controllers.EditOffice))    
-	http.HandleFunc("/office/delete-office", config.AdminOnly(controllers.DeleteOffice))
+	officeController := controllers.NewOfficeController(db)
+	http.HandleFunc("/office", config.AdminOnly(officeController.Office))                    
+	http.HandleFunc("/office/add-office", config.AdminOnly(officeController.AddOffice))      
+	http.HandleFunc("/office/edit-office", config.AdminOnly(officeController.EditOffice))    
+	http.HandleFunc("/office/delete-office", config.AdminOnly(officeController.DeleteOffice))
 	
 	// shift routes
-	http.HandleFunc("/shift", config.AdminOnly(controllers.FindAllShift))                    
-	http.HandleFunc("/shift/add-shift", config.AdminOnly(controllers.AddShift))       
-	http.HandleFunc("/shift/edit-shift", config.AdminOnly(controllers.EditShift))     
-	http.HandleFunc("/shift/delete-shift", config.AdminOnly(controllers.DeleteShift))
+	shiftController := controllers.NewShiftController(db)
+	http.HandleFunc("/shift", config.AdminOnly(shiftController.FindAllShift))                    
+	http.HandleFunc("/shift/add-shift", config.AdminOnly(shiftController.AddShift))       
+	http.HandleFunc("/shift/edit-shift", config.AdminOnly(shiftController.EditShift))     
+	http.HandleFunc("/shift/delete-shift", config.AdminOnly(shiftController.DeleteShift))
 
 	// attendance routes
-	http.HandleFunc("/attendance-submit", config.EmployeeOnly(controllers.SubmitAttendance))
-	http.HandleFunc("/attendance-list", config.AdminOnly(controllers.ListAttendance))
+	attendanceController := controllers.NewAttendanceController(db)
+	http.HandleFunc("/attendance-submit", config.EmployeeOnly(attendanceController.SubmitAttendance))
+	http.HandleFunc("/attendance-list", config.AdminOnly(attendanceController.ListAttendance))
 	
 	// leave routes
-	http.HandleFunc("/leave/leave-type", config.AdminOnly(controllers.LeaveType))
-	http.HandleFunc("/leave/delete-leave-type", config.AdminOnly(controllers.DeleteLeaveType))
-	
-	http.HandleFunc("/leave-list", config.AdminOnly(controllers.ListLeave))
-	http.HandleFunc("/leave-submit", config.EmployeeOnly(controllers.SubmitLeave))
-	http.HandleFunc("/leave/approval", config.AdminOnly(controllers.ApprovalLeave))
+	leaveController := controllers.NewLeaveController(db)
+	http.HandleFunc("/leave/leave-type", config.AdminOnly(leaveController.LeaveType))
+	http.HandleFunc("/leave/delete-leave-type", config.AdminOnly(leaveController.DeleteLeaveType))
+	http.HandleFunc("/leave-list", config.AdminOnly(leaveController.ListLeave))
+	http.HandleFunc("/leave-submit", config.EmployeeOnly(leaveController.SubmitLeave))
+	http.HandleFunc("/leave/approval", config.AdminOnly(leaveController.ApprovalLeave))
 
 	// salary routes
-	http.HandleFunc("/salary-list", config.AdminOnly(controllers.ListSalary))
-	http.HandleFunc("/salary/detail-salary", config.AdminOnly(controllers.DetailEmployeeSalary))
-	http.HandleFunc("/slip-list", config.EmployeeOnly(controllers.SlipListEmployeeSalary))
-	http.HandleFunc("/salary/input-salary", config.AdminOnly(controllers.InputEmployeeSalary))
-	http.HandleFunc("/salary/edit-salary", config.AdminOnly(controllers.EditEmployeeSalary))
-	http.HandleFunc("/salary/delete-salary", config.AdminOnly(controllers.DeleteEmployeeSalary))
-	http.HandleFunc("/salary/delete-slip", config.AdminOnly(controllers.DeleteEmployeeSlip))
-	http.HandleFunc("/salary/download-slip", config.AuthOnly(controllers.DownloadEmployeeSlip))
+	salaryController := controllers.NewSalaryController(db)
+	http.HandleFunc("/salary-list", config.AdminOnly(salaryController.ListSalary))
+	http.HandleFunc("/salary/detail-salary", config.AdminOnly(salaryController.DetailEmployeeSalary))
+	http.HandleFunc("/slip-list", config.EmployeeOnly(salaryController.SlipListEmployeeSalary))
+	http.HandleFunc("/salary/input-salary", config.AdminOnly(salaryController.InputEmployeeSalary))
+	http.HandleFunc("/salary/edit-salary", config.AdminOnly(salaryController.EditEmployeeSalary))
+	http.HandleFunc("/salary/delete-salary", config.AdminOnly(salaryController.DeleteEmployeeSalary))
+	http.HandleFunc("/salary/delete-slip", config.AdminOnly(salaryController.DeleteEmployeeSlip))
+	http.HandleFunc("/salary/download-slip", config.AuthOnly(salaryController.DownloadEmployeeSlip))
 
 	// run service
 	fmt.Println("Service is running on port 8000")

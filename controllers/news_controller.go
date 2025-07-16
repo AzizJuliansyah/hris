@@ -19,7 +19,15 @@ import (
 	"time"
 )
 
-func ListNews(httpWriter http.ResponseWriter, request *http.Request) {
+type NewsController struct {
+	db *sql.DB
+}
+
+func NewNewsController(db *sql.DB) *NewsController {
+	return &NewsController{db: db}
+}
+
+func (controller *NewsController) ListNews(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -31,18 +39,13 @@ func ListNews(httpWriter http.ResponseWriter, request *http.Request) {
 	))
 	data := make(map[string]interface{})
 
-	session, _ := config.Store.Get(request, config.SESSION_ID)
-	if flashes := session.Flashes("success"); len(flashes) > 0 {
-		data["success"] = flashes[0]
-		session.Save(request, httpWriter)
-	}
-
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-	newss, err := models.NewNewsModel().FindAllNews()
+	newsModel := models.NewNewsModel(controller.db)
+	newss, err := newsModel.FindAllNews()
 	if err != nil {
 		data["error"] = "Terdapat kesahalan saat menampilkan data news " + err.Error()
 		log.Println("error :", err.Error())
@@ -57,7 +60,7 @@ func ListNews(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func AddNews(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *NewsController) AddNews(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -71,7 +74,7 @@ func AddNews(httpWriter http.ResponseWriter, request *http.Request) {
 	data := make(map[string]interface{})
 	session, _ := config.Store.Get(request, config.SESSION_ID)
 	sessionNIK := session.Values["nik"].(string)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -158,7 +161,8 @@ func AddNews(httpWriter http.ResponseWriter, request *http.Request) {
 		}
 
 		// Simpan ke DB
-		err = models.NewNewsModel().AddNews(news)
+		newsModel := models.NewNewsModel(controller.db)
+		err = newsModel.AddNews(news)
 		if err != nil {
 			data["error"] = "Gagal menambahkan berita: " + err.Error()
 		} else {
@@ -172,7 +176,7 @@ func AddNews(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func EditNews(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *NewsController) EditNews(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -186,12 +190,8 @@ func EditNews(httpWriter http.ResponseWriter, request *http.Request) {
 	data := make(map[string]interface{})
 	session, _ := config.Store.Get(request, config.SESSION_ID)
 	sessionNIK := session.Values["nik"].(string)
-	if flashes := session.Flashes("success"); len(flashes) > 0 {
-		data["success"] = flashes[0]
-		session.Save(request, httpWriter)
-	}
 	
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -199,10 +199,15 @@ func EditNews(httpWriter http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
 		id := request.URL.Query().Get("id")
 		int64Id, _ := strconv.ParseInt(id, 10, 64)
-		news, err := models.NewNewsModel().FindNewsByID(int64Id)
+
+		newsModel := models.NewNewsModel(controller.db)
+		news, err := newsModel.FindNewsByID(int64Id)
 		if err != nil || id == "" {
-			http.Error(httpWriter, "ID tidak ditemukan", http.StatusBadRequest)
-			return
+			session, _ := config.Store.Get(request, config.SESSION_ID)
+			session.AddFlash("Gagal mendapatkan berita! " + err.Error(), "error")
+			session.Save(request, httpWriter)
+
+			http.Redirect(httpWriter, request, "/news", http.StatusSeeOther)
 		}
 		
 		data["news"] = news
@@ -271,7 +276,8 @@ func EditNews(httpWriter http.ResponseWriter, request *http.Request) {
 				return
 			}
 
-			oldPhoto, err := models.NewNewsModel().GetThumbnailByID(int64Id)
+			newsModel := models.NewNewsModel(controller.db)
+			oldPhoto, err := newsModel.GetThumbnailByID(int64Id)
 			if err != nil {
 				data["error"] = "Gagal mendapatkan data Photo."
 				data["news"] = news
@@ -313,7 +319,8 @@ func EditNews(httpWriter http.ResponseWriter, request *http.Request) {
 		}
 
 		// Simpan ke DB
-		err = models.NewNewsModel().EditNews(news)
+		newsModel := models.NewNewsModel(controller.db)
+		err = newsModel.EditNews(news)
 		if err != nil {
 			data["error"] = "Gagal mengubah berita: " + err.Error()
 		} else {
@@ -327,8 +334,7 @@ func EditNews(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-
-func DeleteNews(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *NewsController) DeleteNews(httpWriter http.ResponseWriter, request *http.Request) {
 	id := request.URL.Query().Get("id")
 	if id == "" {
 		http.Error(httpWriter, "ID tidak ditemukan", http.StatusBadRequest)
@@ -338,7 +344,7 @@ func DeleteNews(httpWriter http.ResponseWriter, request *http.Request) {
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
 
 	// Ambil nama thumbnail
-	// thumbnail, err := models.NewNewsModel().GetThumbnailByID(int64Id)
+	// thumbnail, err := newsModel.GetThumbnailByID(int64Id)
 	// if err == nil && thumbnail.Valid && thumbnail.String != "" {
 	// 	// Hapus file dari folder
 	// 	path := filepath.Join("public/images/news_thumbnail", thumbnail.String)
@@ -348,7 +354,8 @@ func DeleteNews(httpWriter http.ResponseWriter, request *http.Request) {
 	// }
 
 	// Soft delete
-	err := models.NewNewsModel().SoftDeleteNews(int64Id)
+	newsModel := models.NewNewsModel(controller.db)
+	err := newsModel.SoftDeleteNews(int64Id)
 	if err != nil {
 		http.Error(httpWriter, "Gagal menghapus data: "+err.Error(), http.StatusInternalServerError)
 		return

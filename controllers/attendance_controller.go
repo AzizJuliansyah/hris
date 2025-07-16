@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"hris/config"
 	"hris/entities"
@@ -15,7 +16,15 @@ import (
 	"time"
 )
 
-func SubmitAttendance(httpWriter http.ResponseWriter, request *http.Request) {
+type AttendanceController struct {
+	db *sql.DB
+}
+
+func NewAttendanceController(db *sql.DB) *AttendanceController {
+	return &AttendanceController{db: db}
+}
+
+func (controller *AttendanceController) SubmitAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -30,16 +39,19 @@ func SubmitAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 	
 	session, _ := config.Store.Get(request, config.SESSION_ID)
 	sessionNIK := session.Values["nik"].(string)
-	updateAttendanceStatus(sessionNIK, data)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-	office, _ := models.NewOfficeModel().FindAllOffice()
+	updateAttendanceStatus(controller.db, sessionNIK, data)
+
+	officeModel := models.NewOfficeModel(controller.db)
+	office, _ := officeModel.FindAllOffice()
 	data["office"] = office
 
-	shift, _ := models.NewShiftModel().FindAllShift()
+	shiftModel := models.NewShiftModel(controller.db)
+	shift, _ := shiftModel.FindAllShift()
 	data["shift"] = shift
 
 	currentDate := time.Now()
@@ -58,7 +70,7 @@ func SubmitAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 	todayAttendance := request.URL.Query().Get("today_attendance") == "true"
 	data["todayAttendance"] = todayAttendance
 
-	GetAttendanceList(sessionNIK, data, selectedMonth, todayAttendance)
+	getAttendanceList(controller.db, sessionNIK, data, selectedMonth, todayAttendance)
 
 	if request.Method == http.MethodGet {
 		data["currentPath"] = request.URL.Path
@@ -69,19 +81,21 @@ func SubmitAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 	switch data["status"] {
 	case helpers.NOT_CHECKED_IN:
-		actionCheckIn(httpWriter, request, sessionNIK, data, selectedMonth, todayAttendance)
+		actionCheckIn(controller.db, httpWriter, request, sessionNIK, data, selectedMonth, todayAttendance)
 	case helpers.CHECKED_IN:
-		actionCheckOut(httpWriter, request, sessionNIK, data, selectedMonth, todayAttendance)
+		actionCheckOut(controller.db, httpWriter, request, sessionNIK, data, selectedMonth, todayAttendance)
 	}
 }
 
-func updateAttendanceStatus(sessionNik string, data map[string]interface{}) {
-	lastAtt := models.NewAttendanceModel().GetLastAttendance(sessionNik)
+func updateAttendanceStatus(db *sql.DB, sessionNik string, data map[string]interface{}) {
+	attendanceModel := models.NewAttendanceModel(db)
+	lastAtt := attendanceModel.GetLastAttendance(sessionNik)
 	data["status"] = lastAtt
 }
 
-func GetAttendanceList(sessionNik string, data map[string]interface{}, selectedMonth string, todayAttendance bool) {
-	attendedList, err := models.NewAttendanceModel().GetAttendanceList(sessionNik, selectedMonth, todayAttendance)
+func getAttendanceList(db *sql.DB, sessionNik string, data map[string]interface{}, selectedMonth string, todayAttendance bool) {
+	attendanceModel := models.NewAttendanceModel(db)
+	attendedList, err := attendanceModel.GetAttendanceList(sessionNik, selectedMonth, todayAttendance)
 	if err != nil {
 		data["errorList"] = "Error saat menampilkan list kehadiran: " + err.Error()
 	}
@@ -90,7 +104,7 @@ func GetAttendanceList(sessionNik string, data map[string]interface{}, selectedM
 	data["selectedMonth"] = selectedMonth
 }
 
-func actionCheckIn(httpWriter http.ResponseWriter, request *http.Request, sessionNIK string, data map[string]interface{}, selectedMonth string, todayAttendance bool) {
+func actionCheckIn(db *sql.DB, httpWriter http.ResponseWriter, request *http.Request, sessionNIK string, data map[string]interface{}, selectedMonth string, todayAttendance bool) {
 	layoutTime := "2006-01-02 15:04:05"
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -101,7 +115,7 @@ func actionCheckIn(httpWriter http.ResponseWriter, request *http.Request, sessio
 		"views/static/layouts/footer_js.html",
 		"views/static/attendance/attendance-submit.html",
 	))
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -137,8 +151,11 @@ func actionCheckIn(httpWriter http.ResponseWriter, request *http.Request, sessio
 	latitude, _ := strconv.ParseFloat(strings.TrimSpace(latLongParts[0]), 64)
 	longitude, _ := strconv.ParseFloat(strings.TrimSpace(latLongParts[1]), 64)
 
-	findOffice, _ := models.NewOfficeModel().FindOfficeByID(officeID)
-	findShift, _ := models.NewShiftModel().FindShiftByID(shiftID)
+	officeModel := models.NewOfficeModel(db)
+	findOffice, _ := officeModel.FindOfficeByID(officeID)
+
+	shiftModel := models.NewShiftModel(db)
+	findShift, _ := shiftModel.FindShiftByID(shiftID)
 
 	distance := helpers.CalculateDistance(latitude, longitude, findOffice.Latitude, findOffice.Longitude)
 	if distance > float64(findOffice.Radius) {
@@ -172,7 +189,8 @@ func actionCheckIn(httpWriter http.ResponseWriter, request *http.Request, sessio
 	checkIn.Longitude = longitude
 	checkIn.IsLate = isLate
 
-	errCheckIn := models.NewAttendanceModel().CheckIn(checkIn)
+	attendanceModel := models.NewAttendanceModel(db)
+	errCheckIn := attendanceModel.CheckIn(checkIn)
 	if errCheckIn != nil {
 		data["error"] = "Error " + errCheckIn.Error()
 	} else {
@@ -181,15 +199,16 @@ func actionCheckIn(httpWriter http.ResponseWriter, request *http.Request, sessio
 			} else {
 				data["success"] = "Berhasil check in, selamat bekerja"
 			}
-		GetAttendanceList(sessionNIK, data, selectedMonth, todayAttendance)
-		updateAttendanceStatus(sessionNIK, data)
+		getAttendanceList(db, sessionNIK, data, selectedMonth, todayAttendance)
+		updateAttendanceStatus(db, sessionNIK, data)
 	}
 
+	data["attendance"] = entities.Attendance{}
 	data["currentPath"] = request.URL.Path
-		templateLayout.ExecuteTemplate(httpWriter, "base", data)
+	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func actionCheckOut(httpWriter http.ResponseWriter, request *http.Request, sessionNIK string, data map[string]interface{}, selectedMonth string, todayAttendance bool) {
+func actionCheckOut(db *sql.DB, httpWriter http.ResponseWriter, request *http.Request, sessionNIK string, data map[string]interface{}, selectedMonth string, todayAttendance bool) {
 	layoutTime := "2006-01-02 15:04:05"
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -200,7 +219,7 @@ func actionCheckOut(httpWriter http.ResponseWriter, request *http.Request, sessi
 		"views/static/layouts/footer_js.html",
 		"views/static/attendance/attendance-submit.html",
 	))
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -229,8 +248,11 @@ func actionCheckOut(httpWriter http.ResponseWriter, request *http.Request, sessi
 	latitude, _ := strconv.ParseFloat(strings.TrimSpace(latLongParts[0]), 64)
 	longitude, _ := strconv.ParseFloat(strings.TrimSpace(latLongParts[1]), 64)
 
-	officeID, shiftID, _ := models.NewAttendanceModel().GetLatestOfficeAndShift(sessionNIK)
-	findOffice, _ := models.NewOfficeModel().FindOfficeByID(officeID)
+	attendanceModel := models.NewAttendanceModel(db)
+	officeID, shiftID, _ := attendanceModel.GetLatestOfficeAndShift(sessionNIK)
+
+	officeModel := models.NewOfficeModel(db)
+	findOffice, _ := officeModel.FindOfficeByID(officeID)
 	distance := helpers.CalculateDistance(latitude, longitude, findOffice.Latitude, findOffice.Longitude)
 	if distance > float64(findOffice.Radius) {
 		data["error"] = "Anda berada diluar radius kantor, tidak bisa check-out"
@@ -240,7 +262,8 @@ func actionCheckOut(httpWriter http.ResponseWriter, request *http.Request, sessi
 		return
 	}
 
-	findShift, _ := models.NewShiftModel().FindShiftByID(shiftID)
+	shiftModel := models.NewShiftModel(db)
+	findShift, _ := shiftModel.FindShiftByID(shiftID)
 	now := time.Now()
 	dateToday := now.Format("2006-01-02")
 	shiftEndFull := fmt.Sprintf("%s %s", dateToday, findShift.EndTime)
@@ -254,24 +277,25 @@ func actionCheckOut(httpWriter http.ResponseWriter, request *http.Request, sessi
 	checkOut.Longitude = longitude
 	checkOut.IsEarly = isEarly
 
-	errCheckOut := models.NewAttendanceModel().CheckOut(sessionNIK, checkOut)
+	errCheckOut := attendanceModel.CheckOut(sessionNIK, checkOut)
 	if errCheckOut != nil {
 		data["error"] = "Error " + errCheckOut.Error()
 	} else {
 		if isEarly {
 			data["isEarly"] = "Berhasil checkout, namun anda pulang lebih awal"
-			} else {
-				data["success"] = "Berhasil checkout, selamat pulang"
-			}
-		GetAttendanceList(sessionNIK, data, selectedMonth, todayAttendance)
-		updateAttendanceStatus(sessionNIK, data)
+		} else {
+			data["success"] = "Berhasil checkout, selamat pulang"
+		}
+		getAttendanceList(db, sessionNIK, data, selectedMonth, todayAttendance)
+		updateAttendanceStatus(db, sessionNIK, data)
 	}
 
+	data["attendance"] = entities.Attendance{}
 	data["currentPath"] = request.URL.Path
-		templateLayout.ExecuteTemplate(httpWriter, "base", data)
+	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func ListAttendance(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *AttendanceController) ListAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -282,7 +306,7 @@ func ListAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 		"views/static/attendance/attendance-list.html",
 	))
 	data := make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -303,7 +327,8 @@ func ListAttendance(httpWriter http.ResponseWriter, request *http.Request) {
 	todayAttendance := request.URL.Query().Get("today_attendance") == "true"
 	data["todayAttendance"] = todayAttendance
 
-	attendaceList, err := models.NewAttendanceModel().GetAttendanceList("", selectedMonth, todayAttendance)
+	attendanceModel := models.NewAttendanceModel(controller.db)
+	attendaceList, err := attendanceModel.GetAttendanceList("", selectedMonth, todayAttendance)
 	if err != nil {
 		data["errorList"] = "Gagal menampilkan list kehadiran"
 	}
