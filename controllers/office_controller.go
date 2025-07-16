@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"hris/config"
 	"hris/entities"
 	"hris/helpers"
@@ -12,7 +13,15 @@ import (
 	"strconv"
 )
 
-func Office(httpWriter http.ResponseWriter, request *http.Request) {
+type OfficeController struct {
+	db *sql.DB
+}
+
+func NewOfficeController(db *sql.DB) *OfficeController {
+	return &OfficeController{db: db}
+}
+
+func (controller *OfficeController) Office(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -26,7 +35,9 @@ func Office(httpWriter http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
 
 		var data = make(map[string]interface{})
-		offices, err := models.NewOfficeModel().FindAllOffice()
+
+		officeModel := models.NewOfficeModel(controller.db)
+		offices, err := officeModel.FindAllOffice()
 
 		if err != nil {
 			data["error"] = "Terdapat kesahalan saat menampilkan data kantor " + err.Error()
@@ -35,12 +46,7 @@ func Office(httpWriter http.ResponseWriter, request *http.Request) {
 			data["office"] = offices
 		}
 
-		session, _ := config.Store.Get(request, config.SESSION_ID)
-		if flashes := session.Flashes("success"); len(flashes) > 0 {
-			data["success"] = flashes[0]
-			session.Save(request, httpWriter)
-		}
-		errSession := sessiondata.SetUserSessionData(request, data)
+		errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 		if errSession != nil {
 			log.Println("SetUserSessionData error:", errSession.Error())
 		}
@@ -51,7 +57,7 @@ func Office(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func AddOffice(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *OfficeController) AddOffice(httpWriter http.ResponseWriter, request *http.Request) {
 
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -64,7 +70,7 @@ func AddOffice(httpWriter http.ResponseWriter, request *http.Request) {
 	))
 
 	var data = make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -108,7 +114,8 @@ func AddOffice(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewOfficeModel().AddOffice(office)
+	officeModel := models.NewOfficeModel(controller.db)
+	err := officeModel.AddOffice(office)
 
 	if err != nil {
 		data["error"] = "Gagal menambahkan kantor: " + err.Error()
@@ -123,7 +130,7 @@ func AddOffice(httpWriter http.ResponseWriter, request *http.Request) {
 
 }
 
-func EditOffice(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *OfficeController) EditOffice(httpWriter http.ResponseWriter, request *http.Request) {
 
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -138,17 +145,21 @@ func EditOffice(httpWriter http.ResponseWriter, request *http.Request) {
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
 
 	var data = make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
 	if request.Method == http.MethodGet {
 		// Ambil data office berdasarkan ID
-		office, err := models.NewOfficeModel().FindOfficeByID(int64Id)
+		officeModel := models.NewOfficeModel(controller.db)
+		office, err := officeModel.FindOfficeByID(int64Id)
 		if err != nil || id == "" {
-			http.Error(httpWriter, "ID tidak ditemukan", http.StatusBadRequest)
-			return
+			session, _ := config.Store.Get(request, config.SESSION_ID)
+			session.AddFlash("Gagal mendapatkan data office! " + err.Error(), "error")
+			session.Save(request, httpWriter)
+		
+			http.Redirect(httpWriter, request, "/office", http.StatusSeeOther)
 		}
 
 		// Kirim data ke template
@@ -191,12 +202,13 @@ func EditOffice(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewOfficeModel().EditOffice(office)
+	officeModel := models.NewOfficeModel(controller.db)
+	err := officeModel.EditOffice(office)
 
 	if err != nil {
 		data["error"] = "Edit data gagal: " + err.Error()
 	} else {
-		updatedOffice, errFind := models.NewOfficeModel().FindOfficeByID(int64Id)
+		updatedOffice, errFind := officeModel.FindOfficeByID(int64Id)
 		if errFind != nil {
 			data["error"] = "Data berhasil diubah, tapi gagal menampilkan data terbaru: " + errFind.Error()
 		} else {
@@ -210,7 +222,7 @@ func EditOffice(httpWriter http.ResponseWriter, request *http.Request) {
 
 }
 
-func DeleteOffice(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *OfficeController) DeleteOffice(httpWriter http.ResponseWriter, request *http.Request) {
 
 	id := request.URL.Query().Get("id")
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
@@ -220,7 +232,8 @@ func DeleteOffice(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewOfficeModel().SoftDeleteOffice(int64Id)
+	officeModel := models.NewOfficeModel(controller.db)
+	err := officeModel.SoftDeleteOffice(int64Id)
 	if err != nil {
 		http.Error(httpWriter, "Gagal menghapus data: "+err.Error(), http.StatusInternalServerError)
 		return

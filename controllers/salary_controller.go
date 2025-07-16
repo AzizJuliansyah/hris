@@ -17,6 +17,14 @@ import (
 	"time"
 )
 
+type SalaryController struct {
+	db *sql.DB
+}
+
+func NewSalaryController(db *sql.DB) *SalaryController {
+	return &SalaryController{db: db}
+}
+
 func humanizeIDR(n int64) string {
 	str := fmt.Sprintf("%d", n)
 	var result []string
@@ -38,7 +46,7 @@ func toInt64(s string) int64 {
 	return n
 }
 
-func ListSalary(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) ListSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	funcMap := template.FuncMap{
 		"formatIDR": humanizeIDR,
 		"toInt64":   toInt64,
@@ -54,18 +62,16 @@ func ListSalary(httpWriter http.ResponseWriter, request *http.Request) {
 		"views/static/salary/salary-list.html",
 	))
 	data := make(map[string]interface{})
-	session, _ := config.Store.Get(request, config.SESSION_ID)	
-	errSession := sessiondata.SetUserSessionData(request, data)
+	
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
-	if flashes := session.Flashes("success"); len(flashes) > 0 {
-		data["success"] = flashes[0]
-		session.Save(request, httpWriter)
-	}
+	salaryModel := models.NewSalaryModel(controller.db)
+
 
 	if request.Method == http.MethodGet {
-		salaries, err := models.NewSalaryModel().FindAllSalaries()
+		salaries, err := salaryModel.FindAllSalaries()
 		
 		if err != nil {
 			data["error"] = "Failed to retrieve salary data: " + err.Error()
@@ -80,7 +86,7 @@ func ListSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	funcMap := template.FuncMap{
 		"formatIDR": humanizeIDR,
 	}
@@ -98,13 +104,9 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 
 	data := make(map[string]interface{})
 	session, _ := config.Store.Get(request, config.SESSION_ID)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
-	}
-	if flashes := session.Flashes("success"); len(flashes) > 0 {
-		data["success"] = flashes[0]
-		session.Save(request, httpWriter)
 	}
 
 	id := request.URL.Query().Get("id")
@@ -114,7 +116,9 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	salary, err := models.NewSalaryModel().FindSalaryByID(int64Id)
+	salaryModel := models.NewSalaryModel(controller.db)
+
+	salary, err := salaryModel.FindSalaryByID(int64Id)
 	if err != nil {
 		data["error"] = "Failed to retrieve salary data: " + err.Error()
 		log.Println("Error retrieving salary:", err)
@@ -141,8 +145,11 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 	month := parsedMonth.Month()
 	year := parsedMonth.Year()
 
-	daysPresent, _ := models.NewAttendanceModel().CountDaysPresent(nik, month, year)
-	leaves, errLeave := models.NewLeaveModel().FindLeavesByNIK(nik)
+	attendanceModel := models.NewAttendanceModel(controller.db)
+	daysPresent, _ := attendanceModel.CountDaysPresent(nik, month, year)
+
+	leaveModel := models.NewLeaveModel(controller.db)
+	leaves, errLeave := leaveModel.FindLeavesByNIK(nik)
 	if errLeave != nil {
 		log.Println("Error get leaves:", errLeave)
 	}
@@ -186,7 +193,7 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 	data["salaryId"] = salary.Id
 	data["employeeName"] = salary.EmployeeName
 
-	slip, errSlip := models.NewSalaryModel().GetSalarySlipsByNIK(nik)
+	slip, errSlip := salaryModel.GetSalarySlipsByNIK(nik)
 	if errSlip != nil {
 		data["error"] = "Gagal mendapatkan slip gaji: " + errSlip.Error()
 	} else {
@@ -195,7 +202,7 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 
 
 	if request.Method == http.MethodPost {
-		exists, err := models.NewSalaryModel().IsSlipExist(nik, year, int(month))
+		exists, err := salaryModel.IsSlipExist(nik, year, int(month))
 		if err != nil {
 			http.Error(httpWriter, "Gagal mengecek slip: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -221,7 +228,7 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 			Transport_Allowance_Received: sql.NullInt64{Int64: transport, Valid: salary.Transport_Allowance.Valid,},
 			Salary_Total: 		   sql.NullInt64{Int64: total, Valid: true},
 		}
-		err = models.NewSalaryModel().CreateSalarySlip(slip)
+		err = salaryModel.CreateSalarySlip(slip)
 		if err != nil {
 			data["error"] = "Gagal menerbitkan slip gaji: " + err.Error()
 		} else {
@@ -236,7 +243,7 @@ func DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func SlipListEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) SlipListEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -250,12 +257,14 @@ func SlipListEmployeeSalary(httpWriter http.ResponseWriter, request *http.Reques
 	data := make(map[string]interface{})
 	session, _ := config.Store.Get(request, config.SESSION_ID)
 	sessionNIK := session.Values["nik"].(string)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-	slip, errSlip := models.NewSalaryModel().GetSalarySlipsByNIK(sessionNIK)
+	salaryModel := models.NewSalaryModel(controller.db)
+
+	slip, errSlip := salaryModel.GetSalarySlipsByNIK(sessionNIK)
 	if errSlip != nil {
 		data["error"] = "Gagal mendapatkan slip gaji: " + errSlip.Error()
 	} else {
@@ -270,7 +279,7 @@ func SlipListEmployeeSalary(httpWriter http.ResponseWriter, request *http.Reques
 
 
 
-func DownloadEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) DownloadEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := "views/static/salary/slip-pdf.html"
 
 	id := request.URL.Query().Get("id")
@@ -282,7 +291,9 @@ func DownloadEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request)
 	}
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
 
-	slip, err := models.NewSalaryModel().GetSalarySlipByID(int64Id)
+	salaryModel := models.NewSalaryModel(controller.db)
+
+	slip, err := salaryModel.GetSalarySlipByID(int64Id)
 	if err != nil {
 		http.Error(httpWriter, "Gagal mengambil data slip: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -317,6 +328,7 @@ func countLeaveDaysInMonth(leaveDates string, year int, month time.Month) int {
 	}
 	return count
 }
+
 func parseInt64(value string) int64 {
 	if value == "" {
 		return 0
@@ -329,7 +341,7 @@ func parseInt64(value string) int64 {
 	return intValue
 }
 
-func InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -341,12 +353,13 @@ func InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) 
 	))
 
 	data := make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
+	salaryModel := models.NewSalaryModel(controller.db)
 
-	employees, err := models.NewSalaryModel().GetEmployeeNameandNIK()
+	employees, err := salaryModel.GetEmployeeNameandNIK()
 	if err != nil {
 		log.Println("Error Getting Employee NIK and Name", err)
 		return
@@ -357,12 +370,25 @@ func InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) 
 		request.ParseForm()
 
 		salary := entities.EmployeeSalary{
-			NIK:                 request.Form.Get("nik"),
-			Monthly_Wages:       sql.NullString{String: request.Form.Get("monthly_wages"), Valid: true},
-			Daily_Wages:         sql.NullString{String: request.Form.Get("daily_wages"), Valid: true},
-			Meal_Allowance:      sql.NullString{String: request.Form.Get("meal_allowance"), Valid: true},
-			Transport_Allowance: sql.NullString{String: request.Form.Get("transport_allowance"), Valid: true},
+			NIK: request.Form.Get("nik"),
+			Monthly_Wages: sql.NullString{
+				String: request.Form.Get("monthly_wages"),
+				Valid:  request.Form.Get("monthly_wages") != "",
+			},
+			Daily_Wages: sql.NullString{
+				String: request.Form.Get("daily_wages"),
+				Valid:  request.Form.Get("daily_wages") != "",
+			},
+			Meal_Allowance: sql.NullString{
+				String: request.Form.Get("meal_allowance"),
+				Valid:  request.Form.Get("meal_allowance") != "",
+			},
+			Transport_Allowance: sql.NullString{
+				String: request.Form.Get("transport_allowance"),
+				Valid:  request.Form.Get("transport_allowance") != "",
+			},
 		}
+
 
 		errorMessages := helpers.NewValidation().Struct(salary)
 		if errorMessages != nil {
@@ -374,7 +400,7 @@ func InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) 
 		}
 
 		nikInput := request.Form.Get("nik")
-		exists, errNik := models.NewSalaryModel().IsEmployeeExistByNIK(nikInput)
+		exists, errNik := salaryModel.IsEmployeeExistByNIK(nikInput)
 		if errNik != nil {
 			log.Println("Error cek NIK:", errNik)
 			data["error"] = "Terjadi kesalahan saat validasi NIK"
@@ -391,7 +417,7 @@ func InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) 
 			return
 		}
 
-		err := models.NewSalaryModel().InputEmployeeSalary(salary)
+		err := salaryModel.InputEmployeeSalary(salary)
 		if err != nil {
 			log.Println("Error inputting employee salary:", err)
 			http.Error(httpWriter, "Failed to input salary", http.StatusInternalServerError)
@@ -411,7 +437,7 @@ func InputEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) 
 }
 
 
-func EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -423,10 +449,12 @@ func EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	))
 
 	data := make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
+
+	salaryModel := models.NewSalaryModel(controller.db)
 
 	id := request.URL.Query().Get("id")
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
@@ -436,18 +464,12 @@ func EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	if request.Method == http.MethodGet {
-		salary, err := models.NewSalaryModel().FindSalaryByID(int64Id)
+		salary, err := salaryModel.FindSalaryByID(int64Id)
 		if err != nil {
 			data["error"] = "Failed to retrieve salary data: " + err.Error()
 			log.Println("Error retrieving salary:", err)
 		} else {
 			data["salary"] = salary
-		}
-
-		session, _ := config.Store.Get(request, config.SESSION_ID)
-		if flashes := session.Flashes("success"); len(flashes) > 0 {
-			data["success"] = flashes[0]
-			session.Save(request, httpWriter)
 		}
 
 		data["currentPath"] = request.URL.Path
@@ -459,11 +481,23 @@ func EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 		request.ParseForm()
 
 		salary := entities.EditEmployeeSalary{
-			Id: 				 int64Id,		
-			Monthly_Wages:       sql.NullString{String: request.Form.Get("monthly_wages"), Valid: true},
-			Daily_Wages:         sql.NullString{String: request.Form.Get("daily_wages"), Valid: true},
-			Meal_Allowance:      sql.NullString{String: request.Form.Get("meal_allowance"), Valid: true},
-			Transport_Allowance: sql.NullString{String: request.Form.Get("transport_allowance"), Valid: true},
+			Id: 				 int64Id,
+			Monthly_Wages: sql.NullString{
+				String: request.Form.Get("monthly_wages"),
+				Valid:  request.Form.Get("monthly_wages") != "",
+			},
+			Daily_Wages: sql.NullString{
+				String: request.Form.Get("daily_wages"),
+				Valid:  request.Form.Get("daily_wages") != "",
+			},
+			Meal_Allowance: sql.NullString{
+				String: request.Form.Get("meal_allowance"),
+				Valid:  request.Form.Get("meal_allowance") != "",
+			},
+			Transport_Allowance: sql.NullString{
+				String: request.Form.Get("transport_allowance"),
+				Valid:  request.Form.Get("transport_allowance") != "",
+			},
 		}
 
 		errorMessages := helpers.NewValidation().Struct(salary)
@@ -475,13 +509,13 @@ func EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		err := models.NewSalaryModel().EditEmployeeSalary(salary)
+		err := salaryModel.EditEmployeeSalary(salary)
 		if err != nil {
 			log.Println("Error editting employee salary:", err)
 			http.Error(httpWriter, "Failed to edit salary", http.StatusInternalServerError)
 			return
 		} else {
-			salary, errFind := models.NewSalaryModel().FindSalaryByID(int64Id)
+			salary, errFind := salaryModel.FindSalaryByID(int64Id)
 			if errFind != nil {
 				data["error"] = "Data berhasil diubah, tapi gagal menampilkan data terbaru: " + errFind.Error()
 			} else {
@@ -495,7 +529,7 @@ func EditEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func DeleteEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) DeleteEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	id := request.URL.Query().Get("id")
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
 	if id == "" {
@@ -503,7 +537,9 @@ func DeleteEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	err := models.NewSalaryModel().DeleteSalary(int64Id)
+	salaryModel := models.NewSalaryModel(controller.db)
+
+	err := salaryModel.DeleteSalary(int64Id)
 	if err != nil {
 		log.Println("Error deleting employee salary:", err)
 		http.Error(httpWriter, "Failed to delete salary", http.StatusInternalServerError)
@@ -517,7 +553,7 @@ func DeleteEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request)
 	http.Redirect(httpWriter, request, "/salary-list", http.StatusSeeOther)
 }
 
-func DeleteEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *SalaryController) DeleteEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request) {
 	slip_id := request.URL.Query().Get("slip_id")
 	salary_id := request.URL.Query().Get("id")
 	int64Id, _ := strconv.ParseInt(slip_id, 10, 64)
@@ -526,7 +562,9 @@ func DeleteEmployeeSlip(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewSalaryModel().DeleteSalarySlip(int64Id)
+	salaryModel := models.NewSalaryModel(controller.db)
+
+	err := salaryModel.DeleteSalarySlip(int64Id)
 	if err != nil {
 		log.Println("Error deleting employee slip:", err)
 		http.Error(httpWriter, "Failed to delete slip", http.StatusInternalServerError)

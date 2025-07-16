@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 )
 
@@ -12,13 +10,9 @@ type OfficeModel struct {
 	db *sql.DB
 }
 
-func NewOfficeModel() *OfficeModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database:", err)
-	}
+func NewOfficeModel(db *sql.DB) *OfficeModel {
 	return &OfficeModel{
-		db: conn,
+		db: db,
 	}
 }
 

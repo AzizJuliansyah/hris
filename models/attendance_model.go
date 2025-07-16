@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
 	"hris/helpers"
 	"log"
@@ -15,13 +14,9 @@ type AttendanceModel struct {
 	db *sql.DB
 }
 
-func NewAttendanceModel() *AttendanceModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+func NewAttendanceModel(db *sql.DB) *AttendanceModel {
 	return &AttendanceModel{
-		db: conn,
+		db: db,
 	}
 }
 

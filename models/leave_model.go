@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"strings"
 	"time"
 )
@@ -13,13 +11,9 @@ type LeaveModel struct {
 	db *sql.DB
 }
 
-func NewLeaveModel() *LeaveModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database:", err)
-	}
+func NewLeaveModel(db *sql.DB) *LeaveModel {
 	return &LeaveModel{
-		db: conn,
+		db: db,
 	}
 }
 
@@ -327,7 +321,7 @@ func (model LeaveModel) GetLeaveById(id int64) (*entities.Leave, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Tidak ditemukan
+			return nil, err // Tidak ditemukan
 		}
 		return nil, err
 	}

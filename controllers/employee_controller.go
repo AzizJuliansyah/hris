@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"hris/config"
 	"hris/entities"
@@ -18,7 +19,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func FindAllEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+type EmployeeController struct {
+	db *sql.DB
+}
+
+func NewEmployeeController(db *sql.DB) *EmployeeController {
+	return &EmployeeController{db: db}
+}
+
+func (controller *EmployeeController) FindAllEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -37,7 +46,8 @@ func FindAllEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		employeeOnly := request.URL.Query().Get("employee_only") == "true"
 		data["employeeOnly"] = employeeOnly
 
-		employees, err := models.NewEmployeeModel().FindAllEmployee(adminOnly, employeeOnly)
+		employeeModel := models.NewEmployeeModel(controller.db)
+		employees, err := employeeModel.FindAllEmployee(adminOnly, employeeOnly)
 
 		if err != nil {
 			data["error"] = "Gagal mengambil data karyawan: " + err.Error()
@@ -46,21 +56,10 @@ func FindAllEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 			data["employees"] = employees
 		}
 
-		session, _ := config.Store.Get(request, config.SESSION_ID)
-		if flashes := session.Flashes("success"); len(flashes) > 0 {
-			data["success"] = flashes[0]
-			session.Save(request, httpWriter)
-		}
-		if flashes := session.Flashes("error"); len(flashes) > 0 {
-			data["error"] = flashes[0]
-			session.Save(request, httpWriter)
-		}
-		sessionNIK := session.Values["nik"].(string)
-		errSession := sessiondata.SetUserSessionData(request, data)
+		errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 		if errSession != nil {
 			log.Println("SetUserSessionData error:", errSession.Error())
 		}
-		data["sessionNIK"] = sessionNIK
 
 		data["currentPath"] = request.URL.Path
 		templateLayout.ExecuteTemplate(httpWriter, "base", data)
@@ -69,7 +68,7 @@ func FindAllEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 }
 
 
-func AddEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) AddEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -82,7 +81,7 @@ func AddEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 
 	var data = make(map[string]interface{})
 	session, _ := config.Store.Get(request, config.SESSION_ID)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -119,7 +118,8 @@ func AddEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewEmployeeModel().AddEmployee(employee)
+	employeeModel := models.NewEmployeeModel(controller.db)
+	err := employeeModel.AddEmployee(employee)
 	if err != nil {
 		data["error"] = "Registrasi gagal: " + err.Error()
 		data["currentPath"] = request.URL.Path
@@ -132,7 +132,7 @@ func AddEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 
 }
 
-func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -144,21 +144,28 @@ func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	))
 
 	uuid := request.URL.Query().Get("uuid")
-	
-	if request.URL.Query().Get("uuid") == "" {
-		http.Error(httpWriter, "UUID tidak ditemukan", http.StatusBadRequest)
-		return
+	if uuid == "" {
+		session, _ := config.Store.Get(request, config.SESSION_ID)
+		session.AddFlash("Gagal, UUID kosong!", "error")
+		session.Save(request, httpWriter)
+
+		http.Redirect(httpWriter, request, "/employee", http.StatusSeeOther)
 	}
 	var data = make(map[string]interface{})
 
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-	employee, err := models.NewEmployeeModel().FindEmployeeByUUID(uuid)
+	employeeModel := models.NewEmployeeModel(controller.db)
+	employee, err := employeeModel.FindEmployeeByUUID(uuid)
 	if err != nil {
-		data["error"] = "Gagal menampilkan profile employee" + err.Error()
+		session, _ := config.Store.Get(request, config.SESSION_ID)
+		session.AddFlash("Gagal mendapatkan data karyawan!" + err.Error(), "error")
+		session.Save(request, httpWriter)
+
+		http.Redirect(httpWriter, request, "/employee", http.StatusSeeOther)
 	}
 	if employee.Photo.Valid && employee.Photo.String != "" {
 		data["employeePhoto"] = "/images/user_photo/" + employee.Photo.String
@@ -183,13 +190,15 @@ func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 
 	todayAttendance := request.URL.Query().Get("today_attendance") == "true"
 	data["todayAttendance"] = todayAttendance
-	attendedList, err := models.NewAttendanceModel().GetAttendanceList(employee.NIK, selectedAttendanceMonth, todayAttendance)
+
+	attendanceModel := models.NewAttendanceModel(controller.db)
+	attendedList, err := attendanceModel.GetAttendanceList(employee.NIK, selectedAttendanceMonth, todayAttendance)
 	if err != nil {
 		data["errorList"] = "Error saat menampilkan list kehadiran: " + err.Error()
 	}
 	data["attendances"] = attendedList
 
-	totalAttendanceAll, totalAttendanceThisMonth, err := models.NewAttendanceModel().GetAttendanceCounts(employee.NIK, selectedAttendanceMonth)
+	totalAttendanceAll, totalAttendanceThisMonth, err := attendanceModel.GetAttendanceCounts(employee.NIK, selectedAttendanceMonth)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -205,20 +214,23 @@ func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 
 	todayLeave := request.URL.Query().Get("today_leave") == "true"
 	data["todayLeave"] = todayLeave
-	leaveList, err := models.NewLeaveModel().GetLeaveList(employee.NIK, selectedLeaveMonth, todayLeave)
+
+	leaveModel := models.NewLeaveModel(controller.db)
+	leaveList, err := leaveModel.GetLeaveList(employee.NIK, selectedLeaveMonth, todayLeave)
 	if err != nil {
-		data["errorList"] = "Error saat menampilkan list kehadiran: " + err.Error()
+		data["errorList"] = "Error saat menampilkan list pengajuan cuti: " + err.Error()
 	}
 	data["leaves"] = leaveList
 
-	totalLeaveAll, totalLeaveThisMonth, err := models.NewLeaveModel().GetLeaveCounts(employee.NIK, selectedLeaveMonth)
+	totalLeaveAll, totalLeaveThisMonth, err := leaveModel.GetLeaveCounts(employee.NIK, selectedLeaveMonth)
 	if err != nil {
 		fmt.Println(err)
 	}
 	data["totalLeaveAll"] = totalLeaveAll
 	data["totalLeaveThisMonth"] = totalLeaveThisMonth
 
-	slip, errSlip := models.NewSalaryModel().GetSalarySlipsByNIK(employee.NIK)
+	salaryModel := models.NewSalaryModel(controller.db)
+	slip, errSlip := salaryModel.GetSalarySlipsByNIK(employee.NIK)
 	if errSlip != nil {
 		data["error"] = "Gagal mendapatkan slip gaji: " + errSlip.Error()
 	} else {
@@ -230,7 +242,7 @@ func DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func EditEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) EditEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -241,22 +253,28 @@ func EditEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		"views/static/employee/edit-employee.html",
 	))
 	uuid := request.URL.Query().Get("uuid")
+	if uuid == "" {
+		session, _ := config.Store.Get(request, config.SESSION_ID)
+		session.AddFlash("Gagal, UUID kosong!", "error")
+		session.Save(request, httpWriter)
+
+		http.Redirect(httpWriter, request, "/employee", http.StatusSeeOther)
+	}
 	var data = make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
 	if request.Method == http.MethodGet {
-		if request.URL.Query().Get("uuid") == "" {
-			http.Error(httpWriter, "UUID tidak ditemukan", http.StatusBadRequest)
-			return
-		}
-
-		employee, err := models.NewEmployeeModel().FindEmployeeByUUID(uuid)
+		employeeModel := models.NewEmployeeModel(controller.db)
+		employee, err := employeeModel.FindEmployeeByUUID(uuid)
 		if err != nil {
-			data["error"] = "Gagal mengambil data karyawan: " + err.Error()
-			return
+			session, _ := config.Store.Get(request, config.SESSION_ID)
+			session.AddFlash("Gagal mendapatkan data karyawan!" + err.Error(), "error")
+			session.Save(request, httpWriter)
+
+			http.Redirect(httpWriter, request, "/employee", http.StatusSeeOther)
 		}
 		data["employee"] = employee
 		data["currentPath"] = request.URL.Path
@@ -286,12 +304,12 @@ func EditEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 	
-
-	err := models.NewEmployeeModel().EditEmployee(employee)
+	employeeModel := models.NewEmployeeModel(controller.db)
+	err := employeeModel.EditEmployee(employee)
 	if err != nil {
 		data["error"] = "Gagal mengubah data karyawan: " + err.Error()
 	} else {
-		updatedEmployee, errFind := models.NewEmployeeModel().FindEmployeeByUUID(uuid)
+		updatedEmployee, errFind := employeeModel.FindEmployeeByUUID(uuid)
 		if errFind != nil {
 			data["error"] = "Data berhasil diubah, tapi gagal menampilkan data terbaru: " + errFind.Error()
 		} else {
@@ -304,7 +322,7 @@ func EditEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func DeletedEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) DeletedEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -323,7 +341,8 @@ func DeletedEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		employeeOnly := request.URL.Query().Get("employee_only") == "true"
 		data["employeeOnly"] = employeeOnly
 
-		deletedemployees, err := models.NewEmployeeModel().FindAllDeletedEmployee(adminOnly, employeeOnly)
+		employeeModel := models.NewEmployeeModel(controller.db)
+		deletedemployees, err := employeeModel.FindAllDeletedEmployee(adminOnly, employeeOnly)
 
 		if err != nil {
 			data["error"] = "Gagal mengambil data karyawan: " + err.Error()
@@ -332,17 +351,10 @@ func DeletedEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 			data["deletedemployees"] = deletedemployees
 		}
 
-		session, _ := config.Store.Get(request, config.SESSION_ID)
-		if flashes := session.Flashes("success"); len(flashes) > 0 {
-			data["success"] = flashes[0]
-			session.Save(request, httpWriter)
-		}
-		sessionNIK := session.Values["nik"].(string)
-		errSession := sessiondata.SetUserSessionData(request, data)
+		errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 		if errSession != nil {
 			log.Println("SetUserSessionData error:", errSession.Error())
 		}
-		data["sessionNIK"] = sessionNIK
 
 		data["currentPath"] = request.URL.Path
 		templateLayout.ExecuteTemplate(httpWriter, "base", data)
@@ -350,14 +362,15 @@ func DeletedEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func SoftDeleteEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) SoftDeleteEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	uuid := request.URL.Query().Get("uuid")
 	if uuid == "" {
 		http.Error(httpWriter, "UUID tidak ditemukan", http.StatusBadRequest)
 		return
 	}
 
-	err := models.NewEmployeeModel().SoftDeleteEmployee(uuid)
+	employeeModel := models.NewEmployeeModel(controller.db)
+	err := employeeModel.SoftDeleteEmployee(uuid)
 
 	if err != nil {
 		http.Error(httpWriter, "Gagal Menghapus data", http.StatusBadRequest)
@@ -371,14 +384,15 @@ func SoftDeleteEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 
 }
 
-func RestoreEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) RestoreEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	uuid := request.URL.Query().Get("uuid")
 	if uuid == "" {
 		http.Error(httpWriter, "UUID tidak ditemukan", http.StatusBadRequest)
 		return
 	}
 
-	err := models.NewEmployeeModel().RestoreEmployee(uuid)
+	employeeModel := models.NewEmployeeModel(controller.db)
+	err := employeeModel.RestoreEmployee(uuid)
 
 	if err != nil {
 		fmt.Println(err)
@@ -393,14 +407,15 @@ func RestoreEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 
 }
 
-func DeleteEmployee(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *EmployeeController) DeleteEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	uuid := request.URL.Query().Get("uuid")
 	if uuid == "" {
 		http.Error(httpWriter, "UUID tidak ditemukan", http.StatusBadRequest)
 		return
 	}
 
-	oldPhoto, errGetPhoto := models.NewEmployeeModel().GetPhotoByUUID(uuid)
+	employeeModel := models.NewEmployeeModel(controller.db)
+	oldPhoto, errGetPhoto := employeeModel.GetPhotoByUUID(uuid)
 	fmt.Println(oldPhoto)
 	if errGetPhoto != nil {
 		session, _ := config.Store.Get(request, config.SESSION_ID)
@@ -419,7 +434,7 @@ func DeleteEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	errDelEmployee := models.NewEmployeeModel().DeleteEmployee(uuid)
+	errDelEmployee := employeeModel.DeleteEmployee(uuid)
 	if errDelEmployee != nil {
 		http.Error(httpWriter, "Gagal Menghapus data", http.StatusBadRequest)
 		return

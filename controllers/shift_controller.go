@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"database/sql"
+	"hris/config"
 	"hris/entities"
 	"hris/helpers"
 	"hris/models"
@@ -12,7 +14,15 @@ import (
 	"time"
 )
 
-func FindAllShift(httpWriter http.ResponseWriter, request *http.Request) {
+type ShiftController struct {
+	db *sql.DB
+}
+
+func NewShiftController(db *sql.DB) *ShiftController {
+	return &ShiftController{db: db}
+}
+
+func (controller *ShiftController) FindAllShift(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -26,8 +36,9 @@ func FindAllShift(httpWriter http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
 
 		var data = make(map[string]interface{})
-		shifts, err := models.NewShiftModel().FindAllShift()
 
+		shiftModel := models.NewShiftModel(controller.db)
+		shifts, err := shiftModel.FindAllShift()
 		if err != nil {
 			data["error"] = "Terdapat kesahalan saat menampilkan data shift " + err.Error()
 			log.Println("error :", err.Error())
@@ -35,7 +46,7 @@ func FindAllShift(httpWriter http.ResponseWriter, request *http.Request) {
 			data["shift"] = shifts
 		}
 
-		errSession := sessiondata.SetUserSessionData(request, data)
+		errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 		if errSession != nil {
 			log.Println("SetUserSessionData error:", errSession.Error())
 		}
@@ -46,7 +57,7 @@ func FindAllShift(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func AddShift(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *ShiftController) AddShift(httpWriter http.ResponseWriter, request *http.Request) {
 
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -58,7 +69,7 @@ func AddShift(httpWriter http.ResponseWriter, request *http.Request) {
 		"views/static/shift/add-shift.html",
 	))
 	var data = make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -97,8 +108,8 @@ func AddShift(httpWriter http.ResponseWriter, request *http.Request) {
 	shift.StartTime = startTimeParsed.Format("15:04:05")
 	shift.EndTime = endTimeParsed.Format("15:04:05")
 
-	err := models.NewShiftModel().AddShift(shift)
-
+	shiftModel := models.NewShiftModel(controller.db)
+	err := shiftModel.AddShift(shift)
 	if err != nil {
 		data["error"] = "Gagal menambahkan shift: " + err.Error()
 	} else {
@@ -110,7 +121,7 @@ func AddShift(httpWriter http.ResponseWriter, request *http.Request) {
 
 }
 
-func EditShift(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *ShiftController) EditShift(httpWriter http.ResponseWriter, request *http.Request) {
 
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -124,7 +135,7 @@ func EditShift(httpWriter http.ResponseWriter, request *http.Request) {
 	
 
 	var data = make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -133,10 +144,14 @@ func EditShift(httpWriter http.ResponseWriter, request *http.Request) {
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
 	if request.Method == http.MethodGet {
 		// Ambil data shift berdasarkan ID
-		shift, err := models.NewShiftModel().FindShiftByID(int64Id)
+		shiftModel := models.NewShiftModel(controller.db)
+		shift, err := shiftModel.FindShiftByID(int64Id)
 		if err != nil || id == "" {
-			http.Error(httpWriter, "ID tidak ditemukan", http.StatusBadRequest)
-			return
+			session, _ := config.Store.Get(request, config.SESSION_ID)
+			session.AddFlash("Gagal mendapatkan data shift! " + err.Error(), "error")
+			session.Save(request, httpWriter)
+		
+			http.Redirect(httpWriter, request, "/shift", http.StatusSeeOther)
 		}
 		
 		data["shift"] = shift
@@ -164,12 +179,12 @@ func EditShift(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewShiftModel().EditShift(shift)
-
+	shiftModel := models.NewShiftModel(controller.db)
+	err := shiftModel.EditShift(shift)
 	if err != nil {
 		data["error"] = "Edit data gagal: " + err.Error()
 	} else {
-		updatedShift, errFind := models.NewShiftModel().FindShiftByID(int64Id)
+		updatedShift, errFind := shiftModel.FindShiftByID(int64Id)
 		if errFind != nil {
 			data["error"] = "Data berhasil diubah, tapi gagal menampilkan data terbaru: " + errFind.Error()
 		} else {
@@ -182,7 +197,7 @@ func EditShift(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func DeleteShift(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *ShiftController) DeleteShift(httpWriter http.ResponseWriter, request *http.Request) {
 
 	id := request.URL.Query().Get("id")
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
@@ -192,7 +207,8 @@ func DeleteShift(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewShiftModel().SoftDeleteShift(int64Id)
+	shiftModel := models.NewShiftModel(controller.db)
+	err := shiftModel.SoftDeleteShift(int64Id)
 	if err != nil {
 		http.Error(httpWriter, "Gagal menghapus data: "+err.Error(), http.StatusInternalServerError)
 		return

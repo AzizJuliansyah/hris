@@ -53,7 +53,7 @@
                             <tbody>
                                 {{range .leaves}}
                                 <tr>
-                                    <td>{{.CreatedAt.Format "02 Jan 2006"}}</td>
+                                    <td>{{.CreatedAt.Format "02 Jan 2006 15:04"}}</td>
                                     <td>{{.NIK}}</td>
                                     <td>{{.EmployeeName}}</td>
                                     <td>{{.LeaveTypeName}}</td>
@@ -77,7 +77,7 @@
                                     </td>
                                     <td>
                                         {{if .UpdatedAt.Valid}}
-                                            {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                            {{.UpdatedAt.Time.Format "02 Jan 2006 15:04"}}
                                         {{else}}
                                             <span>-</span>
                                         {{end}}
@@ -98,7 +98,14 @@
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <h5><strong>Tanggal pengajuan: {{.CreatedAt.Format "02 Jan 2006"}}</strong></h5>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Tanggal pengajuan <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{.CreatedAt.Format "02 Jan 2006 15:04"}}</span>
+                                                                    </div>
+                                                                </div>
                                                                 <div class="row mb-2">
                                                                     <div class="col-4">
                                                                         <h6><strong class="d-flex justify-content-between">NIK <span>:</span></strong></h6>

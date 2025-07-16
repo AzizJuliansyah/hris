@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 
 	"github.com/goodsign/monday"
@@ -14,13 +12,9 @@ type EmployeeModel struct {
 	db *sql.DB
 }
 
-func NewEmployeeModel() *EmployeeModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+func NewEmployeeModel(db *sql.DB) *EmployeeModel {
 	return &EmployeeModel{
-		db: conn,
+		db: db,
 	}
 }
 
@@ -64,7 +58,7 @@ func (model EmployeeModel) FindAllEmployee(adminOnly bool, employeeOnly bool) ([
 			return []entities.Employee{}, err
 		}
 
-		employee.BirthDate = monday.Format(birthDateTime, "01 Januari 2006", monday.LocaleIdID)
+		employee.BirthDate = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 		if photo.Valid {
 			employee.Photo = photo
 		} else {
@@ -128,7 +122,7 @@ func (model EmployeeModel) FindEmployeeByUUID(uuid string) (entities.Employee, e
 		return employee, err
 	}
 	employee.BirthDate = birthDateTime.Format("2006-01-02")
-	employee.BirthDateFormat = monday.Format(birthDateTime, "01 Januari 2006", monday.LocaleIdID)
+	employee.BirthDateFormat = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 	if photo.Valid {
 		employee.Photo = photo
 	} else {
@@ -201,7 +195,7 @@ func (model EmployeeModel) FindAllDeletedEmployee(adminOnly bool, employeeOnly b
 			return []entities.Employee{}, err
 		}
 
-		employee.BirthDate = monday.Format(birthDateTime, "01 Januari 2006", monday.LocaleIdID)
+		employee.BirthDate = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 		if photo.Valid {
 			employee.Photo = photo
 		} else {
