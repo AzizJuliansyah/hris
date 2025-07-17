@@ -71,7 +71,14 @@ Edit News
                             <div class="col-12">
                                 <div class="form-group">
                                     <label for="assigne_nik">Penerima berita <small class="text-muted">(Optional)</small></label>
-                                    <input type="text" class="form-control {{ if .validation.Assigne_NIK }} is-invalid {{ end }}" id="assigne_nik" name="assigne_nik" value="{{ .news.Assigne_NIK.String }}">
+                                    <!-- <input type="text" class="form-control {{ if .validation.Assigne_NIK }} is-invalid {{ end }}" id="assigne_nik" name="assigne_nik" value="{{ .news.Assigne_NIK.String }}"> -->
+                                    <select class="form-select js-example-basic-single {{ if .validation.Assigne_NIK }}is-invalid{{ end }}" name="assigne_nik" style="width: 100%;">
+                                        <option value="default" selected disabled>-- Pilih Karyawan --</option>
+                                        {{ $Assigne_NIK := .news.Assigne_NIK }}
+                                        {{ range .employees }}
+                                            <option value="{{ .NIK }}" {{ if eq $Assigne_NIK.String (printf "%s" .NIK) }}selected{{ end }}>{{ .Name }}</option>
+                                        {{ end }}
+                                    </select>
                                     <div class="invalid-feedback">
                                         {{ .validation.Assigne_NIK}}
                                     </div>
@@ -126,5 +133,12 @@ Edit News
 			reader.readAsDataURL(file);
 		}
 	});
+
+    $(document).ready(function() {
+        $('.js-example-basic-single').select2({
+            placeholder: "Cari karyawan...",
+            allowClear: true
+        });
+    });
 </script>
 {{ end }}

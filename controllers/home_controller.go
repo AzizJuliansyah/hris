@@ -40,7 +40,7 @@ func (controller *HomeController) Home(httpWriter http.ResponseWriter, request *
 	}
 
 	newsModel := models.NewNewsModel(controller.db)
-	newss, err := newsModel.FindAllNews()
+	newss, err := newsModel.FindNewsForEmployee(sessionNIK)
 	if err != nil {
 		data["error"] = "Terdapat kesahalan saat menampilkan data news " + err.Error()
 		log.Println("error :", err.Error())

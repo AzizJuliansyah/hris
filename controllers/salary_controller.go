@@ -89,6 +89,7 @@ func (controller *SalaryController) ListSalary(httpWriter http.ResponseWriter, r
 func (controller *SalaryController) DetailEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
 	funcMap := template.FuncMap{
 		"formatIDR": humanizeIDR,
+		"toInt64": toInt64,
 	}
 
 	templateLayout := template.Must(template.New("base").Funcs(funcMap).ParseFiles(
@@ -117,7 +118,6 @@ func (controller *SalaryController) DetailEmployeeSalary(httpWriter http.Respons
 	}
 
 	salaryModel := models.NewSalaryModel(controller.db)
-
 	salary, err := salaryModel.FindSalaryByID(int64Id)
 	if err != nil {
 		data["error"] = "Failed to retrieve salary data: " + err.Error()
@@ -244,7 +244,12 @@ func (controller *SalaryController) DetailEmployeeSalary(httpWriter http.Respons
 }
 
 func (controller *SalaryController) SlipListEmployeeSalary(httpWriter http.ResponseWriter, request *http.Request) {
-	templateLayout := template.Must(template.ParseFiles(
+	funcMap := template.FuncMap{
+		"formatIDR": humanizeIDR,
+		"toInt64": toInt64,
+	}
+
+	templateLayout := template.Must(template.New("base").Funcs(funcMap).ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
 		"views/static/layouts/navbar.html",
@@ -269,6 +274,13 @@ func (controller *SalaryController) SlipListEmployeeSalary(httpWriter http.Respo
 		data["error"] = "Gagal mendapatkan slip gaji: " + errSlip.Error()
 	} else {
 		data["salarySlips"] = slip
+	}
+	
+	wages, errWages := salaryModel.GetEmployeeWagesByNIK(sessionNIK)
+	if errWages != nil {
+		data["error"] = "Gagal mengambil data gaji" + errWages.Error()
+	} else {
+		data["wages"] = wages
 	}
 
 	data["currentPath"] = request.URL.Path
@@ -357,8 +369,8 @@ func (controller *SalaryController) InputEmployeeSalary(httpWriter http.Response
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
+	
 	salaryModel := models.NewSalaryModel(controller.db)
-
 	employees, err := salaryModel.GetEmployeeNameandNIK()
 	if err != nil {
 		log.Println("Error Getting Employee NIK and Name", err)

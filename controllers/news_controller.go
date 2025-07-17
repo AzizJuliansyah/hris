@@ -78,6 +78,15 @@ func (controller *NewsController) AddNews(httpWriter http.ResponseWriter, reques
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
+	data["news"] = entities.News{} // atasi no value
+
+	salaryModel := models.NewSalaryModel(controller.db)
+	employees, err := salaryModel.GetEmployeeNameandNIK()
+	if err != nil {
+		log.Println("Error Getting Employee NIK and Name", err)
+		return
+	}
+	data["employees"] = employees
 
 	if request.Method == http.MethodPost {
 		request.ParseMultipartForm(5 << 20)
@@ -195,10 +204,20 @@ func (controller *NewsController) EditNews(httpWriter http.ResponseWriter, reque
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
+	id := request.URL.Query().Get("id")
+	int64Id, _ := strconv.ParseInt(id, 10, 64)
+
+	data["news"] = entities.News{} // atasi no value
+
+	salaryModel := models.NewSalaryModel(controller.db)
+	employees, err := salaryModel.GetEmployeeNameandNIK()
+	if err != nil {
+		log.Println("Error Getting Employee NIK and Name", err)
+		return
+	}
+	data["employees"] = employees
 
 	if request.Method == http.MethodGet {
-		id := request.URL.Query().Get("id")
-		int64Id, _ := strconv.ParseInt(id, 10, 64)
 
 		newsModel := models.NewNewsModel(controller.db)
 		news, err := newsModel.FindNewsByID(int64Id)
@@ -217,8 +236,6 @@ func (controller *NewsController) EditNews(httpWriter http.ResponseWriter, reque
 	}
 
 	if request.Method == http.MethodPost {
-		id := request.FormValue("id")
-		int64Id, _ := strconv.ParseInt(id, 10, 64)
 		request.ParseMultipartForm(5 << 20)
 		assigneNIKInput := request.Form.Get("assigne_nik")
 
@@ -243,6 +260,7 @@ func (controller *NewsController) EditNews(httpWriter http.ResponseWriter, reque
 				Time:  endDate,
 				Valid: endDateInput != "",
 			},
+			Id: int64Id,
 		}
 
 		// Validasi
@@ -316,6 +334,13 @@ func (controller *NewsController) EditNews(httpWriter http.ResponseWriter, reque
 			}
 
 			news.Thumbnail = sql.NullString{String: filename, Valid: true}
+		} else {
+			// Tidak ada file baru: pakai thumbnail lama
+			newsModel := models.NewNewsModel(controller.db)
+			oldPhoto, err := newsModel.GetThumbnailByID(int64Id)
+			if err == nil {
+				news.Thumbnail = oldPhoto
+			}
 		}
 
 		// Simpan ke DB
@@ -326,7 +351,7 @@ func (controller *NewsController) EditNews(httpWriter http.ResponseWriter, reque
 		} else {
 			session.AddFlash("Berhasil mengubah berita.", "success")
 			session.Save(request, httpWriter)
-			http.Redirect(httpWriter, request, "/news/edit-news?id="+strconv.FormatInt(news.Id, 10), http.StatusSeeOther)
+			http.Redirect(httpWriter, request, "/news/edit-news?id="+id, http.StatusSeeOther)
 		}
 	}
 

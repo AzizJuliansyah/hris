@@ -27,6 +27,8 @@ func NewEmployeeController(db *sql.DB) *EmployeeController {
 	return &EmployeeController{db: db}
 }
 
+
+
 func (controller *EmployeeController) FindAllEmployee(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
@@ -133,7 +135,12 @@ func (controller *EmployeeController) AddEmployee(httpWriter http.ResponseWriter
 }
 
 func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWriter, request *http.Request) {
-	templateLayout := template.Must(template.ParseFiles(
+	funcMap := template.FuncMap{
+		"formatIDR": humanizeIDR,
+		"toInt64": toInt64,
+	}
+
+	templateLayout := template.Must(template.New("base").Funcs(funcMap).ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
 		"views/static/layouts/navbar.html",
@@ -235,6 +242,13 @@ func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWri
 		data["error"] = "Gagal mendapatkan slip gaji: " + errSlip.Error()
 	} else {
 		data["salarySlips"] = slip
+	}
+
+	wages, errWages := salaryModel.GetEmployeeWagesByNIK(employee.NIK)
+	if errWages != nil {
+		data["error"] = "Gagal mengambil data gaji" + errWages.Error()
+	} else {
+		data["wages"] = wages
 	}
 
 
