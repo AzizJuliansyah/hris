@@ -36,11 +36,14 @@ type Leave struct {
 	CreatedAt     time.Time
 	UpdatedAt     sql.NullTime
 	LeaveDate     []time.Time
-	Name          string
+	EmployeeName  string
+	AdminName     sql.NullString
+	UUID		  string
 }
 
 type ApprovalLeave struct {
 	Id           int64
+	AdminNIK	 string `validate:"required"`
 	Status       int64  `validate:"required"`
 	ReasonStatus string `validate:"required" label:"Catatan"`
 	UpdatedAt    time.Time

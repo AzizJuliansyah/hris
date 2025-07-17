@@ -64,7 +64,7 @@
                 <td><strong>Periode</strong></td>
                 <td>: {{ .slip.FormattedPeriod }}</td>
                 <td><strong>Tanggal Terbit</strong></td>
-                <td>: {{ if .slip.CreatedAt.Valid }}{{ .slip.CreatedAt.Time.Format "02 Januari 2006" }}{{ else }}-{{ end }}</td>
+                <td>: {{ if .slip.CreatedAt.Valid }}{{ .slip.CreatedAt.Time.Format "02 January 2006" }}{{ else }}-{{ end }}</td>
             </tr>
         </table>
 
@@ -83,23 +83,23 @@
             </tr>
             <tr>
                 <td>Gaji Bulanan</td>
-                <td>Rp {{ .slip.Monthly_Wages_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Monthly_Wages_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr>
                 <td>Gaji Harian x Hari Masuk</td>
-                <td>Rp {{ .slip.Daily_Wages_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Daily_Wages_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Makan x Hari Masuk</td>
-                <td>Rp {{ .slip.Meal_Allowance_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Meal_Allowance_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Transport x Hari Masuk</td>
-                <td>Rp {{ .slip.Transport_Allowance_Received.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Transport_Allowance_Received.Int64 | formatIDR }}</td>
             </tr>
             <tr class="total">
                 <td>Total Gaji</td>
-                <td>Rp {{ .slip.Salary_Total.Int64 | formatNumber }}</td>
+                <td>Rp {{ .slip.Salary_Total.Int64 | formatIDR }}</td>
             </tr>
         </table>
 

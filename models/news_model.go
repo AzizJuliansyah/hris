@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 
 	"github.com/goodsign/monday"
@@ -14,13 +12,9 @@ type NewsModel struct {
 	db *sql.DB
 }
 
-func NewNewsModel() *NewsModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database:", err)
-	}
+func NewNewsModel(db *sql.DB) *NewsModel {
 	return &NewsModel{
-		db: conn,
+		db: db,
 	}
 }
 
@@ -92,7 +86,7 @@ func (model NewsModel) FindAllNews() ([]entities.News, error) {
 		}
 
 		news.Created_at = created_atTime
-		news.Created_atFormat = monday.Format(created_atTime, "01 Januari 2006 15:04", monday.LocaleIdID)
+		news.Created_atFormat = monday.Format(created_atTime, "02 January 2006 15:04", monday.LocaleIdID)
 		
 		if thumbnail.Valid {
 			news.Thumbnail = thumbnail
@@ -107,6 +101,82 @@ func (model NewsModel) FindAllNews() ([]entities.News, error) {
 		return nil, err
 	}
 	
+	return newss, nil
+}
+
+func (model NewsModel) FindNewsForEmployee(sessionNIK string) ([]entities.News, error) {
+	var created_atTime time.Time
+	var thumbnail sql.NullString
+	var creatorName sql.NullString
+	var assigneName sql.NullString
+
+	rows, err := model.db.Query(`
+		SELECT 
+			news.id,
+			news.assigne_nik,
+			news.thumbnail,
+			news.title,
+			news.content,
+			news.footer,
+			news.start_date,
+			news.end_date,
+			news.created_at,
+			creator.name AS creator_name,
+			assigne.name AS assigne_name
+		FROM news
+		JOIN employee AS creator ON news.creator_nik = creator.nik
+		LEFT JOIN employee AS assigne ON news.assigne_nik = assigne.nik
+		WHERE news.deleted_at IS NULL AND (news.assigne_nik IS NULL OR news.assigne_nik = ?)
+	`, sessionNIK)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var newss []entities.News
+	for rows.Next() {
+		var news entities.News
+		err := rows.Scan(
+			&news.Id,
+			&news.Assigne_NIK,
+			&thumbnail,
+			&news.Title,
+			&news.Content,
+			&news.Footer,
+			&news.Start_Date,
+			&news.End_Date,
+			&created_atTime,
+			&creatorName,
+			&assigneName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if creatorName.Valid {
+			news.Creator_Name = creatorName.String
+		} else {
+			news.Creator_Name = "undefined"
+		}
+		if assigneName.Valid {
+			news.Assigne_Name = assigneName.String
+		} else {
+			news.Assigne_Name = "-"
+		}
+		news.Created_at = created_atTime
+		news.Created_atFormat = monday.Format(created_atTime, "02 January 2006 15:04", monday.LocaleIdID)
+
+		if thumbnail.Valid {
+			news.Thumbnail = thumbnail
+		} else {
+			news.Thumbnail = sql.NullString{String: "", Valid: false}
+		}
+		newss = append(newss, news)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return newss, nil
 }
 

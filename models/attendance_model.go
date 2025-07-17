@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
 	"hris/helpers"
 	"log"
@@ -15,13 +14,9 @@ type AttendanceModel struct {
 	db *sql.DB
 }
 
-func NewAttendanceModel() *AttendanceModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+func NewAttendanceModel(db *sql.DB) *AttendanceModel {
 	return &AttendanceModel{
-		db: conn,
+		db: db,
 	}
 }
 
@@ -62,23 +57,6 @@ func (model AttendanceModel) GetLastAttendance(nik string) string {
 	}
 }
 
-func (model AttendanceModel) CountAttendanceThisMonth(nik string, month time.Month, year int) (int, error) {
-	query := `
-		SELECT COUNT(*) 
-		FROM attendance 
-		WHERE nik = ? 
-			AND MONTH(checkin_time) = ? 
-			AND YEAR(checkin_time) = ?
-			AND checkin_time IS NOT NULL 
-			AND checkout_time IS NOT NULL
-	`
-
-	var count int
-	err := model.db.QueryRow(query, nik, int(month), year).Scan(&count)
-	return count, err
-}
-
-
 func (model AttendanceModel) CountDaysPresent(nik string, month time.Month, year int) (int, error) {
 	query := `
 		SELECT COUNT(*) FROM attendance 
@@ -104,20 +82,23 @@ func (model AttendanceModel) GetAttendanceList(nik string, monthYear string, tod
 
 	baseQuery := `
         SELECT 
-            a.id, a.nik, a.office_id, a.shift_id,
-            a.checkin_time, a.checkin_latitude, a.checkin_longitude,
-            a.checkin_photo, a.checkin_notes, a.checkout_time,
-            a.checkout_latitude, a.checkout_longitude, a.checkout_photo,
-            a.checkout_notes, a.is_late, a.is_early,
-            o.name as office_name, e.name as employee_name,
-            s.name as shift_name, s.start_time, s.end_time
-        FROM attendance a
-        LEFT JOIN office o ON a.office_id = o.id
-        LEFT JOIN employee e ON a.nik = e.nik
-        LEFT JOIN shift s ON a.shift_id = s.id
-        WHERE a.deleted_at IS NULL
-        AND MONTH(a.checkin_time) = ?
-        AND YEAR(a.checkin_time) = ?
+			a.id, a.nik, a.office_id, a.shift_id,
+			a.checkin_time, a.checkin_latitude, a.checkin_longitude,
+			a.checkin_photo, a.checkin_notes, a.checkout_time,
+			a.checkout_latitude, a.checkout_longitude, a.checkout_photo,
+			a.checkout_notes, a.is_late, a.is_early,
+			o.name AS office_name, 
+			e.name AS employee_name,
+			e.uuid AS employee_uuid,
+			s.name AS shift_name, s.start_time, s.end_time
+		FROM attendance a
+		LEFT JOIN office o ON a.office_id = o.id
+		LEFT JOIN employee e ON a.nik = e.nik
+		LEFT JOIN shift s ON a.shift_id = s.id
+		WHERE a.deleted_at IS NULL
+		AND MONTH(a.checkin_time) = ?
+		AND YEAR(a.checkin_time) = ?
+
     `
 
 	args = []interface{}{parsedDate.Month(), parsedDate.Year()}
@@ -146,8 +127,8 @@ func (model AttendanceModel) GetAttendanceList(nik string, monthYear string, tod
 			&att.CheckInPhoto, &att.CheckInNotes, &att.CheckOutTime,
 			&att.CheckOutLatitude, &att.CheckOutLongitude, &att.CheckOutPhoto,
 			&att.CheckOutNotes, &att.IsLate, &att.IsEarly,
-			&att.OfficeName, &att.EmployeeName, &att.ShiftName,
-			&att.ShiftStartTime, &att.ShiftEndTime,
+			&att.OfficeName, &att.EmployeeName, &att.EmployeeUUID,
+			&att.ShiftName, &att.ShiftStartTime, &att.ShiftEndTime,
 		)
 		if err != nil {
 			return nil, err
@@ -163,6 +144,56 @@ func (model AttendanceModel) GetAttendanceList(nik string, monthYear string, tod
 
 	return attendances, nil
 	
+}
+
+func (model AttendanceModel) GetAttendanceCounts(nik string, monthYear string) (int, int, error) {
+	parsedDate, err := time.Parse("January 2006", monthYear)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// 1. Total semua kehadiran (checkin & checkout tidak null)
+	queryTotal := `
+		SELECT COUNT(*) 
+		FROM attendance 
+		WHERE deleted_at IS NULL 
+			AND checkin_time IS NOT NULL 
+			AND checkout_time IS NOT NULL
+	`
+	// 2. Total bulan ini
+	queryThisMonth := `
+		SELECT COUNT(*) 
+		FROM attendance 
+		WHERE deleted_at IS NULL 
+			AND checkin_time IS NOT NULL 
+			AND checkout_time IS NOT NULL
+			AND MONTH(checkin_time) = ? 
+			AND YEAR(checkin_time) = ?
+	`
+
+	var args []interface{}
+	argsMonth := []interface{}{parsedDate.Month(), parsedDate.Year()}
+
+	if nik != "" {
+		queryTotal += " AND nik = ?"
+		queryThisMonth += " AND nik = ?"
+		args = append(args, nik)
+		argsMonth = append(argsMonth, nik)
+	}
+
+	var totalAll int
+	err = model.db.QueryRow(queryTotal, args...).Scan(&totalAll)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var totalThisMonth int
+	err = model.db.QueryRow(queryThisMonth, argsMonth...).Scan(&totalThisMonth)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return totalAll, totalThisMonth, nil
 }
 
 

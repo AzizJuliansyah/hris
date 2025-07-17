@@ -46,7 +46,7 @@ Persetujuan Pengajuan Cuti Karyawan
                             <label class="form-label">Diajukan Oleh</label>
                         </div>
                         <div class="col-md-9">
-                            <h5>{{ .leave.Name }} - ( {{ .leave.NIK }} )</h5>
+                            <h5>{{ .leave.EmployeeName }} - ( {{ .leave.NIK }} )</h5>
                         </div>
                     </div>
 
@@ -103,7 +103,6 @@ Persetujuan Pengajuan Cuti Karyawan
                         </div>
                     </div>
 
-                    {{if eq .leave.Status 1}}
 
                     <div class="row mb-3">
                         <div class="col-md-3">
@@ -112,12 +111,12 @@ Persetujuan Pengajuan Cuti Karyawan
                         <div class="col-md-9">
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input {{if .validation.Status}}is-invalid{{end}}" type="radio"
-                                    name="status" id="inlineRadio1" value="2" {{if eq .approval.Status 2}}checked{{end}}>
+                                    name="status" id="inlineRadio1" value="2" {{if eq .leave.Status 2}}checked{{end}}>
                                 <label class="form-check-label" for="inlineRadio1">Approve</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input {{if .validation.Status}}is-invalid{{end}}" type="radio"
-                                    name="status" id="inlineRadio2" value="3" {{if eq .approval.Status 3}}checked{{end}}>
+                                    name="status" id="inlineRadio2" value="3" {{if eq .leave.Status 3}}checked{{end}}>
                                 <label class="form-check-label" for="inlineRadio2">Reject</label>
                             </div>
                             {{if .validation.Status}}
@@ -134,16 +133,21 @@ Persetujuan Pengajuan Cuti Karyawan
                         </div>
                         <div class="col-md-9">
                             <textarea class="form-control {{ if .validation.ReasonStatus }} is-invalid {{ end }}" rows="3"
-                                placeholder="Tambahkan catatan" name="reason_status">{{.approval.ReasonStatus}}</textarea>
+                                placeholder="Tambahkan catatan" name="reason_status">{{ if .leave.ReasonStatus.Valid }}{{ .leave.ReasonStatus.String }}{{ end }}</textarea>
                             <div class="invalid-feedback">
                                 {{ .validation.ReasonStatus }}
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Proses</button>
+                    <button type="submit" class="btn btn-primary w-100">
+                        {{ if eq .leave.Status 1 }}
+                            Proses
+                        {{ else }}
+                            Update Status Cuti
+                        {{ end }}
+                    </button>
 
-                    {{end}}
 
                 </form>
             </div>

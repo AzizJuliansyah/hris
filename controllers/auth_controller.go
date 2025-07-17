@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"hris/config"
 	"hris/entities"
 	"hris/helpers"
@@ -11,7 +12,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(httpWriter http.ResponseWriter, request *http.Request) {
+type AuthController struct {
+	db *sql.DB
+}
+
+func NewAuthController(db *sql.DB) *AuthController {
+	return &AuthController{db: db}
+}
+
+func (controller *AuthController) Login(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := "views/static/login/login.html"
 	data := make(map[string]interface{})
 	if request.Method == http.MethodGet {
@@ -20,6 +29,7 @@ func Login(httpWriter http.ResponseWriter, request *http.Request) {
 			data["success"] = flashes[0]
 			session.Save(request, httpWriter)
 		}
+		data["authInput"] = entities.Auth{}
 		views.RenderTemplate(httpWriter, templateLayout, data)
 		return
 	}
@@ -39,9 +49,10 @@ func Login(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	// cek data employee
-	employee, err := models.NewAuthModel().FindEmployeeByNIK(authInput.NIK)
+	authModel := models.NewAuthModel(controller.db)
+	employee, err := authModel.FindEmployeeByNIK(authInput.NIK)
 	if err != nil {
-		data["error"] = "NIK tidak ditemukan"
+		data["error"] = "NIK tidak ditemukan" + err.Error()
 		data["authInput"] = authInput
 		views.RenderTemplate(httpWriter, templateLayout, data)
 		return

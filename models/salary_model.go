@@ -3,9 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 )
 
@@ -13,13 +11,10 @@ type SalaryModel struct {
 	db *sql.DB
 }
 
-func NewSalaryModel() *SalaryModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+
+func NewSalaryModel(db *sql.DB) *SalaryModel {
 	return &SalaryModel{
-		db: conn,
+		db: db,
 	}
 }
 
@@ -77,7 +72,7 @@ func (model SalaryModel) FindAllSalaries() ([]entities.EmployeeSalary, error) {
 
 func (model SalaryModel) GetEmployeeNameandNIK() ([]entities.Employee, error) {
 	query := `
-		SELECT nik, name FROM employee WHERE is_admin = 0 AND deleted_at IS NULL
+		SELECT nik, name FROM employee WHERE deleted_at IS NULL
 	`
 
 	rows, err := model.db.Query(query)
@@ -200,6 +195,24 @@ func (model SalaryModel) GetSalarySlipsByNIK(nik string) ([]entities.SalarySlip,
 	}
 
 	return slips, nil
+}
+
+func (model SalaryModel) GetEmployeeWagesByNIK(nik string) (entities.EmployeeSalary, error) {
+	var wages = entities.EmployeeSalary{}
+	query := `SELECT monthly_wages, daily_wages, meal_allowance, transport_allowance FROM salary WHERE nik = ?`
+
+	err := model.db.QueryRow(query, nik).Scan(
+		&wages.Monthly_Wages,
+		&wages.Daily_Wages,
+		&wages.Meal_Allowance,
+		&wages.Transport_Allowance,
+	)
+
+	if err != nil {
+		return wages, err
+	}
+
+	return wages, nil
 }
 
 func (model SalaryModel) GetSalarySlipByID(id int64) (entities.SalarySlip, error) {
@@ -331,14 +344,13 @@ func (model SalaryModel) EditEmployeeSalary(salary entities.EditEmployeeSalary) 
 	return err
 }
 
-func (model SalaryModel) SoftDeleteSalary(id int64) error {
+func (model SalaryModel) DeleteSalary(id int64) error {
 	query := `
-		UPDATE salary
-		SET deleted_at = ?
-		WHERE id = ? AND deleted_at IS NULL
+		DELETE FROM salary
+		WHERE id = ?
 	`
 
-	_, err := model.db.Exec(query, time.Now(), id)
+	_, err := model.db.Exec(query, id)
 	return err
 }
 

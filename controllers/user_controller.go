@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"hris/config"
 	"hris/entities"
@@ -21,7 +22,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Profile(httpWriter http.ResponseWriter, request *http.Request) {
+type UserController struct {
+	db *sql.DB
+}
+
+func NewUserController(db *sql.DB) *UserController {
+	return &UserController{db: db}
+}
+
+func (controller *UserController) Profile(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -29,46 +38,34 @@ func Profile(httpWriter http.ResponseWriter, request *http.Request) {
 		"views/static/layouts/sidebar.html",
 		"views/static/layouts/footer.html",
 		"views/static/layouts/footer_js.html",
-		"views/static/pages-profile.html",
+		"views/static/user/pages-profile.html",
 	))
 
 	data := make(map[string]interface{})
 	session, _ := config.Store.Get(request, config.SESSION_ID)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 	data["currentPath"] = request.URL.Path
 
 	if request.Method == http.MethodPost && request.FormValue("change_password") == "1" {
-		if result, err := ChangePassword(request, session); err != nil {
+		if result, err := ChangePassword(controller.db, request, session); err != nil {
 			for key, value := range result {
 				data[key] = value
 			}
 		} else {
 			data["tab"] = "password"
 			data["success"] = ("Berhasil mengubah password.")
-			templateLayout.ExecuteTemplate(httpWriter, "base", data)
-		}
-	}
-
-	if request.Method == http.MethodPost && request.FormValue("edit-profile") == "1" {
-		if result, err := EditProfile(request, session); err != nil {
-			for key, value := range result {
-				data[key] = value
-			}
-		} else {
-			data["tab"] = "profile"
-			data["success"] = "Berhasil mengubah profile."
-	
 			sessionNIK := session.Values["nik"].(string)
-			user, err := models.NewUserModel().FindUserByNIK(sessionNIK)
+			userModel := models.NewUserModel(controller.db)
+			user, err := userModel.FindUserByNIK(sessionNIK)
 			if err != nil {
 				data["error"] = "Gagal mengambil data profile setelah update: " + err.Error()
 			} else {
 				data["user"] = user
 
-				errSession := sessiondata.SetUserSessionData(request, data)
+				errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 				if errSession != nil {
 					log.Println("SetUserSessionData error:", errSession.Error())
 				}
@@ -79,7 +76,43 @@ func Profile(httpWriter http.ResponseWriter, request *http.Request) {
 				if err != nil {
 					data["birthDateFormat"] = "-"
 				} else {
-					data["birthDateFormat"] = monday.Format(birthDateTime, "02 Januari 2006", monday.LocaleIdID)
+					data["birthDateFormat"] = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
+				}
+			}
+			templateLayout.ExecuteTemplate(httpWriter, "base", data)
+			return
+		}
+	}
+
+	if request.Method == http.MethodPost && request.FormValue("edit-profile") == "1" {
+		if result, err := EditProfile(controller.db, request, session); err != nil {
+			for key, value := range result {
+				data[key] = value
+			}
+		} else {
+			data["tab"] = "profile"
+			data["success"] = "Berhasil mengubah profile."
+	
+			sessionNIK := session.Values["nik"].(string)
+			userModel := models.NewUserModel(controller.db)
+			user, err := userModel.FindUserByNIK(sessionNIK)
+			if err != nil {
+				data["error"] = "Gagal mengambil data profile setelah update: " + err.Error()
+			} else {
+				data["user"] = user
+
+				errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
+				if errSession != nil {
+					log.Println("SetUserSessionData error:", errSession.Error())
+				}
+
+				
+				timeLayout := "2006-01-02"
+				birthDateTime, err := time.Parse(timeLayout, user.BirthDate)
+				if err != nil {
+					data["birthDateFormat"] = "-"
+				} else {
+					data["birthDateFormat"] = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 				}
 			}
 	
@@ -90,7 +123,8 @@ func Profile(httpWriter http.ResponseWriter, request *http.Request) {
 	
 
 	sessionNIK := session.Values["nik"].(string)
-	user, err := models.NewUserModel().FindUserByNIK(sessionNIK)
+	userModel := models.NewUserModel(controller.db)
+	user, err := userModel.FindUserByNIK(sessionNIK)
 	if err != nil {
 		data["error"] = "Gagal mengambil data profile: " + err.Error()
 		templateLayout.ExecuteTemplate(httpWriter, "base", data)
@@ -103,7 +137,7 @@ func Profile(httpWriter http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		data["birthDateFormat"] = "-"
 	} else {
-		data["birthDateFormat"] = monday.Format(birthDateTime, "02 Januari 2006", monday.LocaleIdID)
+		data["birthDateFormat"] = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 	}
 
 	if data["tab"] == nil {
@@ -114,7 +148,7 @@ func Profile(httpWriter http.ResponseWriter, request *http.Request) {
 }
 
 
-func EditProfile(request *http.Request, session *sessions.Session) (map[string]interface{}, error) {
+func EditProfile(db *sql.DB, request *http.Request, session *sessions.Session) (map[string]interface{}, error) {
 	request.ParseMultipartForm(5 << 20) // max 5MB form size
 
 	userInput := entities.EditProfile{
@@ -162,7 +196,8 @@ func EditProfile(request *http.Request, session *sessions.Session) (map[string]i
 
 		// Simpan file
 		nik := session.Values["nik"].(string)
-		oldPhoto, err := models.NewUserModel().GetPhotoByNIK(nik)
+		userModel := models.NewUserModel(db)
+		oldPhoto, err := userModel.GetPhotoByNIK(nik)
 		if err != nil {
 			return map[string]interface{}{
 				"error": "Gagal mendapatkan data Photo.",
@@ -207,7 +242,8 @@ func EditProfile(request *http.Request, session *sessions.Session) (map[string]i
 	}
 
 	nik := session.Values["nik"].(string)
-	err = models.NewUserModel().EditProfile(nik, userInput)
+	userModel := models.NewUserModel(db)
+	err = userModel.EditProfile(nik, userInput)
 	if err != nil {
 		return map[string]interface{}{
 			"error": "Gagal mengubah data profile: " + err.Error(),
@@ -219,9 +255,7 @@ func EditProfile(request *http.Request, session *sessions.Session) (map[string]i
 	return nil, nil
 }
 
-
-
-func ChangePassword(request *http.Request, session *sessions.Session) (map[string]interface{}, error) {
+func ChangePassword(db *sql.DB, request *http.Request, session *sessions.Session) (map[string]interface{}, error) {
 	request.ParseForm()
 	form := entities.ChangePassword{
 		OldPassword:    request.Form.Get("old_password"),
@@ -241,7 +275,8 @@ func ChangePassword(request *http.Request, session *sessions.Session) (map[strin
 	}
 
 	nik := session.Values["nik"].(string)
-	oldHashedPassword, err := models.NewUserModel().GetPasswordByNIK(nik)
+	userModel := models.NewUserModel(db)
+	oldHashedPassword, err := userModel.GetPasswordByNIK(nik)
 	if err != nil {
 		return map[string]interface{}{
 			"error": "Gagal mendapatkan data password.",
@@ -258,7 +293,7 @@ func ChangePassword(request *http.Request, session *sessions.Session) (map[strin
 		}, fmt.Errorf("invalid old password")
 	}
 
-	err = models.NewUserModel().ChangePassword(nik, form.NewPassword)
+	err = userModel.ChangePassword(nik, form.NewPassword)
 	if err != nil {
 		return map[string]interface{}{
 			"error": "Gagal mengubah password: " + err.Error(),

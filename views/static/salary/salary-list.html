@@ -5,6 +5,7 @@ Employee Salary List
 {{ define "content" }}
 <div class="container-fluid p-0">
     <h1 class="h3 d-inline align-middle">Penghasilan Karyawan</h1>
+    
     <div class="card">
         <div class="card-header">
             <div class="row">
@@ -35,10 +36,30 @@ Employee Salary List
                         <tr>
                             <td>{{ .NIK }}</td>
                             <td>{{ .EmployeeName }}</td>
-                            <td>{{ if .Monthly_Wages.Valid }}{{ .Monthly_Wages.String }}{{ else }}-{{ end }}</td>
-                            <td>{{ if .Daily_Wages.Valid }}{{ .Daily_Wages.String }}{{ else }}-{{ end }}</td>
-                            <td>{{ if .Meal_Allowance.Valid }}{{ .Meal_Allowance.String }}{{ else }}-{{ end }}</td>
-                            <td>{{ if .Transport_Allowance.Valid }}{{ .Transport_Allowance.String }}{{ else }}-{{ end }}</td>
+                            <td>
+                                {{ if .Monthly_Wages.Valid }}
+                                    {{ formatIDR (toInt64 .Monthly_Wages.String) }}
+                                {{ else }}
+                                    -
+                                {{ end }}
+                            </td>
+                            <td>
+                                {{ if .Daily_Wages.Valid }}
+                                    {{ formatIDR (toInt64 .Daily_Wages.String) }}
+                                {{ else }}
+                                    -
+                                {{ end }}</td>
+                            <td>{{ if .Meal_Allowance.Valid }}
+                                    {{formatIDR (toInt64 .Meal_Allowance.String) }}
+                                {{ else }}
+                                    -
+                                {{ end }}</td>
+                            <td>
+                                {{ if .Transport_Allowance.Valid }}
+                                    {{ formatIDR (toInt64 .Transport_Allowance.String) }}
+                                {{ else }}
+                                    -
+                                {{ end }}</td>
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="mx-1">

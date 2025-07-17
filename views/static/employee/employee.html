@@ -5,11 +5,15 @@ List Karyawan
 {{ define "content" }}
 <div class="container-fluid p-0">
     <div class="row mb-2">
-        <div class="col">
+        <div class="col-12 col-md-6">
             <h1 class="h3 mb-3">List Karyawan</h1>
         </div>
-        <div class="col text-end">
-            <a class="btn btn-primary" href="/employee/add-employee"> <i class="align-middle me-1" data-feather="user-plus"></i> Tambah Karyawan</a>
+        <div class="col-12 col-md-6 text-end">
+            <div class="d-flex-align-items-center">
+                <a class="btn btn-primary" href="/employee/add-employee"> <i class="align-middle me-1" data-feather="user-plus"></i> Tambah Karyawan</a>
+                
+                <a class="btn btn-warning" href="/employee/deleted-employee"> <i class="align-middle me-1" data-feather="user-minus"></i> Deleted Karyawan</a>
+            </div>
         </div>
     </div>
 
@@ -17,20 +21,18 @@ List Karyawan
         <div class="col-12 d-flex">
             <div class="card flex-fill">
                 <div class="row">
-                    <div class="d-flex justify-content-end">
-                        <div class="col-6 col-md-4 col-lg-2 m-2">
+                        <div class="col-12 col-md-4 col-lg-2 m-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="adminOnly" onclick="filteradminOnly(this)" {{ if .adminOnly }} checked {{ end }}>
                                 <label class="form-check-label" for="adminOnly">Hanya Admin</label>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4 col-lg-2 m-2">
+                        <div class="col-12 col-md-4 col-lg-2 m-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="employeeOnly" onclick="filteremployeeOnly(this)" {{ if .employeeOnly }} checked {{ end }}>
                                 <label class="form-check-label" for="employeeOnly">Hanya Karyawan</label>
                             </div>
                         </div>
-                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -67,10 +69,10 @@ List Karyawan
                                     </td>
                                     <td>
                                         {{ if .Photo.Valid }}
-                                                <img src="/images/user_photo/{{ .Photo.String }}" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
-                                            {{ else }}
-                                                <img src="/images/user_default.png" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
-                                            {{ end }}
+                                            <img src="/images/user_photo/{{ .Photo.String }}" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                        {{ else }}
+                                            <img src="/images/user_default.png" alt="Foto" class="img-thumbnail" style="height: 60px; width: 60px; object-fit: cover;">
+                                         {{ end }}
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
@@ -104,8 +106,8 @@ List Karyawan
                                                                     </div>
                                                                 </div>
                                                                 <div class="float-end">
-                                                                    <a href="/employee/delete-employee?uuid={{.UUID}}" class="btn btn-outline-danger mx-1">Hapus Employee</a>
-                                                                    <button type="button" class="btn btn-outline-white mx-1" data-dismiss="modal">Close</button>
+                                                                    <a href="/employee/soft-delete-employee?uuid={{.UUID}}" class="btn btn-outline-danger mx-1">Hapus Employee</a>
+                                                                    <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
                                                                 </div>
                                                             </div>
                                                         </div>

@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 
 	"github.com/goodsign/monday"
@@ -14,13 +12,9 @@ type EmployeeModel struct {
 	db *sql.DB
 }
 
-func NewEmployeeModel() *EmployeeModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+func NewEmployeeModel(db *sql.DB) *EmployeeModel {
 	return &EmployeeModel{
-		db: conn,
+		db: db,
 	}
 }
 
@@ -64,7 +58,7 @@ func (model EmployeeModel) FindAllEmployee(adminOnly bool, employeeOnly bool) ([
 			return []entities.Employee{}, err
 		}
 
-		employee.BirthDate = monday.Format(birthDateTime, "01 Januari 2006", monday.LocaleIdID)
+		employee.BirthDate = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 		if photo.Valid {
 			employee.Photo = photo
 		} else {
@@ -128,7 +122,7 @@ func (model EmployeeModel) FindEmployeeByUUID(uuid string) (entities.Employee, e
 		return employee, err
 	}
 	employee.BirthDate = birthDateTime.Format("2006-01-02")
-	employee.BirthDateFormat = monday.Format(birthDateTime, "01 Januari 2006", monday.LocaleIdID)
+	employee.BirthDateFormat = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
 	if photo.Valid {
 		employee.Photo = photo
 	} else {
@@ -161,8 +155,64 @@ func (model EmployeeModel) EditEmployee(employee entities.EditEmployee) error {
 	return err
 }
 
+func (model EmployeeModel) FindAllDeletedEmployee(adminOnly bool, employeeOnly bool) ([]entities.Employee, error) {
+	var photo sql.NullString
 
-func (model EmployeeModel) DeleteEmployee(uuid string) error {
+	query := `
+		SELECT uuid, nik, name, email, phone, gender, birth_date, is_admin, photo
+		FROM employee WHERE deleted_at IS NOT NULL
+	`
+	
+	if adminOnly {
+		query += " AND is_admin = 1"
+	}
+	if employeeOnly {
+		query += " AND is_admin = 0"
+	}
+	
+	rows, err := model.db.Query(query)
+	if err != nil {
+		return []entities.Employee{}, err
+	}
+	defer rows.Close()
+
+	var employees []entities.Employee
+	for rows.Next() {
+		var employee entities.Employee
+		var birthDateTime time.Time
+		err := rows.Scan(
+			&employee.UUID,
+			&employee.NIK,
+			&employee.Name,
+			&employee.Email,
+			&employee.Phone,
+			&employee.Gender,
+			&birthDateTime,
+			&employee.IsAdmin,
+			&photo,
+		)
+		if err != nil {
+			return []entities.Employee{}, err
+		}
+
+		employee.BirthDate = monday.Format(birthDateTime, "02 January 2006", monday.LocaleIdID)
+		if photo.Valid {
+			employee.Photo = photo
+		} else {
+			employee.Photo = sql.NullString{String: "", Valid: false}
+		}
+
+		employees = append(employees, employee)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return employees, nil
+}
+
+func (model EmployeeModel) SoftDeleteEmployee(uuid string) error {
 	query := `
 		UPDATE employee
 		SET deleted_at = ?
@@ -170,6 +220,35 @@ func (model EmployeeModel) DeleteEmployee(uuid string) error {
 	`
 
 	_, err := model.db.Exec(query, time.Now(), uuid)
+
+	return err
+}
+
+func (model EmployeeModel) RestoreEmployee(uuid string) error {
+	query := `
+		UPDATE employee SET deleted_at = NULL WHERE uuid = ?
+	`
+
+	_, err := model.db.Exec(query, uuid)
+
+	return err
+}
+
+func (model EmployeeModel) GetPhotoByUUID(uuid string) (sql.NullString, error) {
+	var photo sql.NullString
+	err := model.db.QueryRow(`
+		SELECT photo FROM employee WHERE uuid = ?
+	`, uuid).Scan(&photo)
+
+	return photo, err
+}
+
+func (model EmployeeModel) DeleteEmployee(uuid string) error {
+	query := `
+		DELETE FROM employee where uuid = ?
+	`
+
+	_, err := model.db.Exec(query, uuid)
 
 	return err
 }

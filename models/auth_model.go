@@ -2,22 +2,16 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 )
 
 type AuthModel struct {
 	db *sql.DB
 }
 
-func NewAuthModel() *AuthModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+func NewAuthModel(db *sql.DB) *AuthModel {
 	return &AuthModel{
-		db: conn,
+		db: db,
 	}
 }
 

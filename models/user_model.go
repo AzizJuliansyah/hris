@@ -2,9 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"hris/config"
 	"hris/entities"
-	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -14,13 +12,9 @@ type UserModel struct {
 	db *sql.DB
 }
 
-func NewUserModel() *UserModel {
-	conn, err := config.DBConnection()
-	if err != nil {
-		log.Println("Failed connect to database: ", err)
-	}
+func NewUserModel(db *sql.DB) *UserModel {
 	return &UserModel{
-		db: conn,
+		db: db,
 	}
 }
 

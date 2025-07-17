@@ -23,11 +23,15 @@
             <div class="card-body">
                 <form action="/salary/edit-salary?id={{ .salary.Id }}" method="POST">
                     <div class="mb-3">
-                        <label>NIK</label>
-                        <input type="text" class="form-control {{ if .validation.NIK }} is-invalid {{ end }}" name="nik"
-                            value="{{ .salary.NIK }}" readonly>
-                        <div class="invalid-feedback">
-                            {{ .validation.NIK}}
+                        <div class="row">
+                            <div class="col-6">
+                                <label>NIK</label>
+                                <input type="text" class="form-control" value="{{ .salary.NIK }}" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label>Employee Name</label>
+                                <input type="text" class="form-control" value="{{ .salary.EmployeeName }}" readonly>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-3">

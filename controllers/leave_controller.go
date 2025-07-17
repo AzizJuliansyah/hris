@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"hris/config"
 	"hris/entities"
@@ -15,7 +16,15 @@ import (
 	"time"
 )
 
-func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
+type LeaveController struct {
+	db *sql.DB
+}
+
+func NewLeaveController(db *sql.DB) *LeaveController {
+	return &LeaveController{db: db}
+}
+
+func (controller *LeaveController) ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -27,7 +36,7 @@ func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	))
 	data := make(map[string]interface{})
 
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
@@ -41,7 +50,6 @@ func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 	data["months"] = months
 
-	// Get selected month from query parameter or use current month
 	selectedMonth := request.URL.Query().Get("month")
 	if selectedMonth == "" {
 		selectedMonth = currentDate.Format("January 2006")
@@ -49,8 +57,8 @@ func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	todayLeave := request.URL.Query().Get("today_leave") == "true"
 	data["todayLeave"] = todayLeave
 
-	// tampilkan list kehadiran
-	leaveList, err := models.NewLeaveModel().GetLeaveList("", selectedMonth, todayLeave)
+	leaveModel := models.NewLeaveModel(controller.db)
+	leaveList, err := leaveModel.GetLeaveList("", selectedMonth, todayLeave)
 	if err != nil {
 		log.Println("Error getting leave list:", err)
 		data["error"] = "Failed to get leave list"
@@ -66,7 +74,7 @@ func ListLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func LeaveType(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *LeaveController) LeaveType(httpWriter http.ResponseWriter, request *http.Request) {
     templateLayout := template.Must(template.ParseFiles(
         "views/static/layouts/base.html",
         "views/static/layouts/header.html",
@@ -78,17 +86,13 @@ func LeaveType(httpWriter http.ResponseWriter, request *http.Request) {
     ))
     data := make(map[string]interface{})
     session, _ := config.Store.Get(request, config.SESSION_ID)
-    if flashes := session.Flashes("success"); len(flashes) > 0 {
-        data["success"] = flashes[0]
-        session.Save(request, httpWriter)
-    }
-    errSession := sessiondata.SetUserSessionData(request, data)
+    errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
     if errSession != nil {
         log.Println("SetUserSessionData error:", errSession.Error())
     }
     
     if request.Method == http.MethodPost && request.FormValue("add-leave-type") == "1" {
-        result, err := AddLeaveType(httpWriter, request)
+        result, err := AddLeaveType(controller.db, httpWriter, request)
         if err != nil {
             for key, value := range result {
                 data[key] = value
@@ -103,7 +107,7 @@ func LeaveType(httpWriter http.ResponseWriter, request *http.Request) {
     }
     
     if request.Method == http.MethodPost && request.FormValue("edit-leave-type") == "1" {
-        result, err := EditLeaveType(httpWriter, request)
+        result, err := EditLeaveType(controller.db, httpWriter, request)
         if err != nil {
 			fmt.Println(err)
             for key, value := range result {
@@ -119,7 +123,8 @@ func LeaveType(httpWriter http.ResponseWriter, request *http.Request) {
         }
     }
     
-    leaveType, errLeaveType := models.NewLeaveModel().FindAllLeaveType()
+	leaveModel := models.NewLeaveModel(controller.db)
+    leaveType, errLeaveType := leaveModel.FindAllLeaveType()
     if errLeaveType != nil {
         data["error"] = "Gagal menampilkan tipe cuti: " + errLeaveType.Error()
     } else {
@@ -130,7 +135,7 @@ func LeaveType(httpWriter http.ResponseWriter, request *http.Request) {
     templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func AddLeaveType(httpWriter http.ResponseWriter, request *http.Request) (map[string]interface{}, error)  {
+func AddLeaveType(db *sql.DB, httpWriter http.ResponseWriter, request *http.Request) (map[string]interface{}, error)  {
 	errors := make(map[string]interface{})
 
 	request.ParseForm()
@@ -150,7 +155,8 @@ func AddLeaveType(httpWriter http.ResponseWriter, request *http.Request) (map[st
 		}, fmt.Errorf("validation Error")
 	}
 
-	errInsert := models.NewLeaveModel().AddLeaveType(addLeave)
+	leaveModel := models.NewLeaveModel(db)
+	errInsert := leaveModel.AddLeaveType(addLeave)
 	if errInsert != nil {
 		return map[string]interface{}{
 			"error": "Gagal menambahkan tipe cuti" + errInsert.Error(),
@@ -160,7 +166,7 @@ func AddLeaveType(httpWriter http.ResponseWriter, request *http.Request) (map[st
 	return nil, nil
 }
 
-func EditLeaveType(httpWriter http.ResponseWriter, request *http.Request) (map[string]interface{}, error) {
+func EditLeaveType(db *sql.DB, httpWriter http.ResponseWriter, request *http.Request) (map[string]interface{}, error) {
 	errors := make(map[string]interface{})
 
 	request.ParseForm()
@@ -183,7 +189,8 @@ func EditLeaveType(httpWriter http.ResponseWriter, request *http.Request) (map[s
 		}, fmt.Errorf("validation Error")
 	}
 
-	errInsert := models.NewLeaveModel().EditLeaveType(editLeave)
+	leaveModel := models.NewLeaveModel(db)
+	errInsert := leaveModel.EditLeaveType(editLeave)
 	if errInsert != nil {
 		return map[string]interface{}{
 			"error": "Gagal mengubah data tipe cuti" + errInsert.Error(),
@@ -193,7 +200,7 @@ func EditLeaveType(httpWriter http.ResponseWriter, request *http.Request) (map[s
 	return nil, nil
 }
 
-func DeleteLeaveType(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *LeaveController) DeleteLeaveType(httpWriter http.ResponseWriter, request *http.Request) {
 	id := request.URL.Query().Get("delete_id")
 	int64Id, _ := strconv.ParseInt(id, 10, 64)
 
@@ -202,7 +209,8 @@ func DeleteLeaveType(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	err := models.NewLeaveModel().DeleteLeaveType(int64Id)
+	leaveModel := models.NewLeaveModel(controller.db)
+	err := leaveModel.DeleteLeaveType(int64Id)
 	if err != nil {
 		http.Error(httpWriter, "Gagal menghapus data: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -215,7 +223,7 @@ func DeleteLeaveType(httpWriter http.ResponseWriter, request *http.Request) {
 	http.Redirect(httpWriter, request, "/leave/leave-type", http.StatusSeeOther)
 }
 
-func SubmitLeave(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *LeaveController) SubmitLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -229,13 +237,13 @@ func SubmitLeave(httpWriter http.ResponseWriter, request *http.Request) {
 
 	session, _ := config.Store.Get(request, config.SESSION_ID)
 	sessionNIK := session.Values["nik"].(string)
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-
-	leaveType, _ := models.NewLeaveModel().FindAllLeaveType()
+	leaveModel := models.NewLeaveModel(controller.db)
+	leaveType, _ := leaveModel.FindAllLeaveType()
 	data["leaveType"] = leaveType
 
 	currentDate := time.Now()
@@ -254,7 +262,7 @@ func SubmitLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	todayLeave := request.URL.Query().Get("today_leave") == "true"
 	data["todayLeave"] = todayLeave
 
-	getLeaveList(data, sessionNIK, selectedMonth, todayLeave)
+	getLeaveList(controller.db, data, sessionNIK, selectedMonth, todayLeave)
 
 	if request.Method == http.MethodGet {
 		data["currentPath"] = request.URL.Path
@@ -300,20 +308,21 @@ func SubmitLeave(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	errSubmit := models.NewLeaveModel().InsertLeave(submitLeave)
+	errSubmit := leaveModel.InsertLeave(submitLeave)
 	if (errSubmit) != nil {
 		data["error"] = "Error " + errSubmit.Error()
 	} else {
 		data["success"] = "Pengajuan cuti berhasil, silahkan tunggu persetujuan dari Admin"
-		getLeaveList(data, sessionNIK, selectedMonth, todayLeave)
+		getLeaveList(controller.db, data, sessionNIK, selectedMonth, todayLeave)
 	}
 
 	data["currentPath"] = request.URL.Path
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func getLeaveList(data map[string]interface{}, sessionNIK string, selectedMonth string, todayLeave bool) {
-	leaveList, err := models.NewLeaveModel().GetLeaveList(sessionNIK, selectedMonth, todayLeave)
+func getLeaveList(db *sql.DB, data map[string]interface{}, sessionNIK string, selectedMonth string, todayLeave bool) {
+	leaveModel := models.NewLeaveModel(db)
+	leaveList, err := leaveModel.GetLeaveList(sessionNIK, selectedMonth, todayLeave)
 	if err != nil {
 		log.Println("Error getting leave list:", err)
 		data["error"] = "Failed to get leave list"
@@ -332,7 +341,7 @@ func cleanLeaveDates(input []string) []string {
 	return cleaned
 }
 
-func ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *LeaveController) ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -346,13 +355,15 @@ func ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	idStr := request.URL.Query().Get("id")
 	id, _ := strconv.ParseInt(idStr, 10, 64)
 
-	var data = make(map[string]interface{})
-	errSession := sessiondata.SetUserSessionData(request, data)
+	data := make(map[string]interface{})
+	session, _ := config.Store.Get(request, config.SESSION_ID)
+	sessionNIK := session.Values["nik"].(string)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 	
-	getLeave(id, httpWriter, data)
+	getLeave(controller.db, id, httpWriter, data, request)
 
 	if request.Method == http.MethodGet {
 		data["currentPath"] = request.URL.Path
@@ -369,6 +380,7 @@ func ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
 	statusInt64, _ := strconv.ParseInt(status, 10, 64)
 	approval := entities.ApprovalLeave{
 		Id:           idInt64,
+		AdminNIK:	  sessionNIK,
 		Status:       statusInt64,
 		ReasonStatus: reason,
 		UpdatedAt:    time.Now(),
@@ -384,23 +396,28 @@ func ApprovalLeave(httpWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	errApprove := models.NewLeaveModel().UpdateLeaveStatus(approval)
+	leaveModel := models.NewLeaveModel(controller.db)
+	errApprove := leaveModel.UpdateLeaveStatus(approval)
 	if errApprove != nil {
 		data["error"] = "Gagal memproses cuti " + errApprove.Error()
 	} else {
 		data["success"] = "Cuti berhasil diproses"
-		getLeave(id, httpWriter, data)
+		getLeave(controller.db, id, httpWriter, data, request)
 	}
 
 	data["currentPath"] = request.URL.Path
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func getLeave(id int64, httpWriter http.ResponseWriter, data map[string]interface{}) {
-	leave, err := models.NewLeaveModel().GetLeaveById(id)
+func getLeave(db *sql.DB, id int64, httpWriter http.ResponseWriter, data map[string]interface{}, request *http.Request) {
+	leaveModel := models.NewLeaveModel(db)
+	leave, err := leaveModel.GetLeaveById(id)
 	if err != nil || leave == nil {
-		http.Error(httpWriter, "Data cuti tidak ditemukan", http.StatusBadRequest)
-		return
+		session, _ := config.Store.Get(request, config.SESSION_ID)
+		session.AddFlash("Gagal mendapatkan data pengajuan cuti!" + err.Error(), "error")
+		session.Save(request, httpWriter)
+	
+		http.Redirect(httpWriter, request, "/leave-list", http.StatusSeeOther)
 	}
 	data["leave"] = leave
 }

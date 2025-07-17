@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"database/sql"
+	"fmt"
 	"hris/config"
 	"hris/models"
 	"hris/services/sessiondata"
@@ -10,7 +12,15 @@ import (
 	"time"
 )
 
-func Home(httpWriter http.ResponseWriter, request *http.Request) {
+type HomeController struct {
+	db *sql.DB
+}
+
+func NewHomeController(db *sql.DB) *HomeController {
+	return &HomeController{db: db}
+}
+
+func (controller *HomeController) Home(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -24,16 +34,13 @@ func Home(httpWriter http.ResponseWriter, request *http.Request) {
 
 	session, _ := config.Store.Get(request, config.SESSION_ID)
 	sessionNIK := session.Values["nik"].(string)
-	if flashes := session.Flashes("success"); len(flashes) > 0 {
-		data["success"] = flashes[0]
-		session.Save(request, httpWriter)
-	}
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-	newss, err := models.NewNewsModel().FindAllNews()
+	newsModel := models.NewNewsModel(controller.db)
+	newss, err := newsModel.FindNewsForEmployee(sessionNIK)
 	if err != nil {
 		data["error"] = "Terdapat kesahalan saat menampilkan data news " + err.Error()
 		log.Println("error :", err.Error())
@@ -42,16 +49,30 @@ func Home(httpWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	now := time.Now()
-	attendanceCount, _ := models.NewAttendanceModel().CountAttendanceThisMonth(sessionNIK, now.Month(), now.Year())
-	leaveDays, _ := models.NewLeaveModel().CountLeaveDaysThisMonth(sessionNIK, now.Month(), now.Year())
-	data["attendanceCount"] = attendanceCount
-	data["leaveDays"] = leaveDays
+	month := now.Format("January 2006")
+	data["month"] = month
+
+	attendanceModel := models.NewAttendanceModel(controller.db)
+	totalAttendanceAll, totalAttendanceThisMonth, err := attendanceModel.GetAttendanceCounts(sessionNIK, month)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data["totalAttendanceAll"] = totalAttendanceAll
+	data["totalAttendanceThisMonth"] = totalAttendanceThisMonth
+
+	leaveModel := models.NewLeaveModel(controller.db)
+	totalLeaveAll, totalLeaveThisMonth, err := leaveModel.GetLeaveCounts(sessionNIK, month)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data["totalLeaveAll"] = totalLeaveAll
+	data["totalLeaveThisMonth"] = totalLeaveThisMonth
 
 	data["currentPath"] = request.URL.Path
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)
 }
 
-func HomeAdmin(httpWriter http.ResponseWriter, request *http.Request) {
+func (controller *HomeController) HomeAdmin(httpWriter http.ResponseWriter, request *http.Request) {
 	templateLayout := template.Must(template.ParseFiles(
 		"views/static/layouts/base.html",
 		"views/static/layouts/header.html",
@@ -63,45 +84,44 @@ func HomeAdmin(httpWriter http.ResponseWriter, request *http.Request) {
 	))
 	data := make(map[string]interface{})
 
-	session, _ := config.Store.Get(request, config.SESSION_ID)
-	if flashes := session.Flashes("success"); len(flashes) > 0 {
-		data["success"] = flashes[0]
-		session.Save(request, httpWriter)
-	}
-	errSession := sessiondata.SetUserSessionData(request, data)
+	errSession := sessiondata.SetUserSessionData(httpWriter, request, data, controller.db)
 	if errSession != nil {
 		log.Println("SetUserSessionData error:", errSession.Error())
 	}
 
-	countAllActiveEmployee, errCAAEmployee := models.NewEmployeeModel().CountAllActiveEmployee()
+	EmployeeModel := models.NewEmployeeModel(controller.db)
+	countAllActiveEmployee, errCAAEmployee := EmployeeModel.CountAllActiveEmployee()
 	if errCAAEmployee != nil {
 		data["errCAAEmployee"] = "Gagal Mengambil Total Karyawan Active" + errCAAEmployee.Error()
 	} else {
 		data["totalEmployee"] = countAllActiveEmployee
 	}
 
-	countAllLeave, errCALeave := models.NewLeaveModel().CountAllLeave()
+	leaveModel := models.NewLeaveModel(controller.db)
+	countAllLeave, errCALeave := leaveModel.CountAllLeave()
 	if errCALeave != nil {
 		data["errCALeave"] = "Gagal Mengambil Total Pengajuan Cuti" + errCALeave.Error()
 	} else {
 		data["totalLeave"] = countAllLeave
 	}
 
-	countAllAttendance, errCAAttendance := models.NewAttendanceModel().CountAllAttendance()
+	attendanceModel := models.NewAttendanceModel(controller.db)
+	countAllAttendance, errCAAttendance := attendanceModel.CountAllAttendance()
 	if errCAAttendance != nil {
 		data["errCAAttendance"] = "Gagal Mengambil Total Absen Karyawan" + errCAAttendance.Error()
 	} else {
 		data["totalAttendance"] = countAllAttendance
 	}
 
-	countAllNews, errCANews := models.NewNewsModel().CountAllNews()
+	newsModel := models.NewNewsModel(controller.db)
+	countAllNews, errCANews := newsModel.CountAllNews()
 	if errCANews != nil {
 		data["errCANews"] = "Gagal Mengambil Total Berita" + errCANews.Error()
 	} else {
 		data["totalNews"] = countAllNews
 	}
 
-	newss, err := models.NewNewsModel().FindAllNews()
+	newss, err := newsModel.FindAllNews()
 	if err != nil {
 		data["error"] = "Terdapat kesahalan saat menampilkan data news " + err.Error()
 		log.Println("error :", err.Error())
