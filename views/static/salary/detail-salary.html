@@ -9,6 +9,92 @@
                 <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
                 <h3 class="ms-2 mb-0 text-dark">Detail Gaji Karyawan: {{ .employeeName }}</h3>
             </a>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col mt-0">
+                                <h5 class="card-title">Gaji Bulanan</h5>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat text-primary">
+                                    <i class="align-middle" data-feather="calendar"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {{ if .salary.Monthly_Wages.Valid }}
+                            <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .salary.Monthly_Wages.String) }}</h3>
+                        {{ else }}
+                            <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col mt-0">
+                                <h5 class="card-title">Gaji Harian</h5>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat text-primary">
+                                    <i class="align-middle" data-feather="clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {{ if .salary.Daily_Wages.Valid }}
+                            <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .salary.Daily_Wages.String) }}</h3>
+                        {{ else }}
+                            <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col mt-0">
+                                <h5 class="card-title">Tunjangan Makan</h5>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat text-primary">
+                                    <i class="align-middle" data-feather="coffee"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {{ if .salary.Meal_Allowance.Valid }}
+                            <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .salary.Meal_Allowance.String) }}</h3>
+                        {{ else }}
+                            <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col mt-0">
+                                <h5 class="card-title">Tunjangan Transport</h5>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat text-primary">
+                                    <i class="align-middle" data-feather="truck"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {{ if .salary.Transport_Allowance.Valid }}
+                            <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .salary.Transport_Allowance.String) }}</h3>
+                        {{ else }}
+                            <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
             <div class="col-12 col-md-6">
                 <div class="card">
                     <div class="card-header">

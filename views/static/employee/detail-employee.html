@@ -18,7 +18,7 @@ Karyawan
 						</div>
 						<div class="col-auto">
 							<div class="stat text-primary">
-								<i class="align-middle" data-feather="users"></i>
+								<i class="align-middle" data-feather="check-square"></i>
 							</div>
 						</div>
 					</div>
@@ -40,7 +40,7 @@ Karyawan
 						</div>
 						<div class="col-auto">
 							<div class="stat text-primary">
-								<i class="align-middle" data-feather="coffee"></i>
+								<i class="align-middle" data-feather="calendar"></i>
 							</div>
 						</div>
 					</div>
@@ -62,7 +62,7 @@ Karyawan
 						</div>
 						<div class="col-auto">
 							<div class="stat text-primary">
-								<i class="align-middle" data-feather="globe"></i>
+								<i class="align-middle" data-feather="briefcase"></i>
 							</div>
 						</div>
 					</div>
@@ -84,7 +84,7 @@ Karyawan
 						</div>
 						<div class="col-auto">
 							<div class="stat text-primary">
-								<i class="align-middle" data-feather="log-in"></i>
+								<i class="align-middle" data-feather="calendar"></i>
 							</div>
 						</div>
 					</div>
@@ -97,6 +97,7 @@ Karyawan
 			</div>
 		</div>
     </div>
+    
     <div class="row">
 		<div class="col-12 col-md-3">
 			<div class="card mb-3">
@@ -278,7 +279,7 @@ Karyawan
                             <tbody>
                                 {{range .leaves}}
                                 <tr>
-                                    <td>{{.CreatedAt.Format "02 Jan 2006"}}</td>
+                                    <td>{{.CreatedAt.Format "02 Jan 2006 15:04"}}</td>
                                     <td>{{.LeaveTypeName}}</td>
                                     <td>
                                         {{ if eq .Status 1 }}
@@ -300,7 +301,7 @@ Karyawan
                                     </td>
                                     <td>
                                         {{if .UpdatedAt.Valid}}
-                                            {{.UpdatedAt.Time.Format "02 Jan 2006"}}
+                                            {{.UpdatedAt.Time.Format "02 Jan 2006 15:04"}}
                                         {{else}}
                                             <span>-</span>
                                         {{end}}
@@ -321,7 +322,14 @@ Karyawan
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <h5><strong>Tanggal pengajuan: {{.CreatedAt.Format "02 Jan 2006"}}</strong></h5>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Tanggal pengajuan <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{.CreatedAt.Format "02 Jan 2006 15:04"}}</span>
+                                                                    </div>
+                                                                </div>
                                                                 <div class="row mb-2">
                                                                     <div class="col-4">
                                                                         <h6><strong class="d-flex justify-content-between">NIK <span>:</span></strong></h6>
@@ -450,6 +458,99 @@ Karyawan
                 </div>
             </div>
 
+            
+        </div>
+	</div>
+    <div class="row">
+        <div class="col-12">
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col mt-0">
+                                    <h5 class="card-title">Gaji Bulanan</h5>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat text-primary">
+                                        <i class="align-middle" data-feather="calendar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            {{ if .wages.Monthly_Wages.Valid }}
+                                <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .wages.Monthly_Wages.String) }}</h3>
+                            {{ else }}
+                                <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col mt-0">
+                                    <h5 class="card-title">Gaji Harian</h5>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat text-primary">
+                                        <i class="align-middle" data-feather="clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            {{ if .wages.Daily_Wages.Valid }}
+                                <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .wages.Daily_Wages.String) }}</h3>
+                            {{ else }}
+                                <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col mt-0">
+                                    <h5 class="card-title">Tunjangan Makan</h5>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat text-primary">
+                                        <i class="align-middle" data-feather="coffee"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            {{ if .wages.Meal_Allowance.Valid }}
+                                <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .wages.Meal_Allowance.String) }}</h3>
+                            {{ else }}
+                                <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col mt-0">
+                                    <h5 class="card-title">Tunjangan Transport</h5>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat text-primary">
+                                        <i class="align-middle" data-feather="truck"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            {{ if .wages.Transport_Allowance.Valid }}
+                                <h3 class="mt-1">Rp. {{ formatIDR (toInt64 .wages.Transport_Allowance.String) }}</h3>
+                            {{ else }}
+                                <h2 class="mt-1">Rp. {{ formatIDR 0 }}</h2>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
             <div class="card flex-fill">
                 <div class="card-header">
                     <h4 class="mb-0">Slip Gaji</h4>
@@ -486,7 +587,7 @@ Karyawan
                 </div>
             </div>
         </div>
-	</div>
+    </div>
 </div>
 {{ end }}
 

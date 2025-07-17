@@ -64,7 +64,7 @@
                 <td><strong>Periode</strong></td>
                 <td>: {{ .slip.FormattedPeriod }}</td>
                 <td><strong>Tanggal Terbit</strong></td>
-                <td>: {{ if .slip.CreatedAt.Valid }}{{ .slip.CreatedAt.Time.Format "02 Januari 2006" }}{{ else }}-{{ end }}</td>
+                <td>: {{ if .slip.CreatedAt.Valid }}{{ .slip.CreatedAt.Time.Format "02 January 2006" }}{{ else }}-{{ end }}</td>
             </tr>
         </table>
 

@@ -197,6 +197,24 @@ func (model SalaryModel) GetSalarySlipsByNIK(nik string) ([]entities.SalarySlip,
 	return slips, nil
 }
 
+func (model SalaryModel) GetEmployeeWagesByNIK(nik string) (entities.EmployeeSalary, error) {
+	var wages = entities.EmployeeSalary{}
+	query := `SELECT monthly_wages, daily_wages, meal_allowance, transport_allowance FROM salary WHERE nik = ?`
+
+	err := model.db.QueryRow(query, nik).Scan(
+		&wages.Monthly_Wages,
+		&wages.Daily_Wages,
+		&wages.Meal_Allowance,
+		&wages.Transport_Allowance,
+	)
+
+	if err != nil {
+		return wages, err
+	}
+
+	return wages, nil
+}
+
 func (model SalaryModel) GetSalarySlipByID(id int64) (entities.SalarySlip, error) {
 	var slip entities.SalarySlip
 	query := `
