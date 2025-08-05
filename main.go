@@ -72,6 +72,19 @@ func main() {
 	attendanceController := controllers.NewAttendanceController(db)
 	http.HandleFunc("/attendance-submit", config.EmployeeOnly(attendanceController.SubmitAttendance))
 	http.HandleFunc("/attendance-list", config.AdminOnly(attendanceController.ListAttendance))
+
+	// kpi routes
+	kpiController := controllers.NewKPIController(db)
+	http.HandleFunc("/kpi", config.AdminOnly(kpiController.FindAllKPI))
+	http.HandleFunc("/kpi/add-kpi", config.AdminOnly(kpiController.AddKPI))
+	http.HandleFunc("/kpi/evaluasi-kpi", config.AdminOnly(kpiController.EvaluasiKPI))
+	http.HandleFunc("/kpi/reset_evaluasi-kpi", config.AdminOnly(kpiController.ResetEvaluasiKPI))
+	http.HandleFunc("/kpi/edit-kpi", config.AdminOnly(kpiController.EditKPI))
+	http.HandleFunc("/kpi/delete-kpi", config.AdminOnly(kpiController.SoftDeleteKPI))
+	http.HandleFunc("/kpi/list-kpi", config.EmployeeOnly(kpiController.ListKPI))
+	http.HandleFunc("/kpi/detail-kpi", config.EmployeeOnly(kpiController.DetailKPI))
+	http.HandleFunc("/kpi/start-kpi", config.EmployeeOnly(kpiController.StartKPI))
+	http.HandleFunc("/kpi/finish-kpi", config.EmployeeOnly(kpiController.FinishKPI))
 	
 	// leave routes
 	leaveController := controllers.NewLeaveController(db)

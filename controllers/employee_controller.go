@@ -189,22 +189,20 @@ func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWri
 	}
 	data["months"] = months
 
+	// attendance
 	selectedAttendanceMonth := request.URL.Query().Get("month_attendance")
 	if selectedAttendanceMonth == "" {
 		selectedAttendanceMonth = currentDate.Format("January 2006")
 	}
 	data["selectedAttendanceMonth"] = selectedAttendanceMonth
-
 	todayAttendance := request.URL.Query().Get("today_attendance") == "true"
 	data["todayAttendance"] = todayAttendance
-
 	attendanceModel := models.NewAttendanceModel(controller.db)
 	attendedList, err := attendanceModel.GetAttendanceList(employee.NIK, selectedAttendanceMonth, todayAttendance)
 	if err != nil {
 		data["errorList"] = "Error saat menampilkan list kehadiran: " + err.Error()
 	}
 	data["attendances"] = attendedList
-
 	totalAttendanceAll, totalAttendanceThisMonth, err := attendanceModel.GetAttendanceCounts(employee.NIK, selectedAttendanceMonth)
 	if err != nil {
 		fmt.Println(err)
@@ -213,29 +211,26 @@ func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWri
 	data["totalAttendanceThisMonth"] = totalAttendanceThisMonth
 
 
+	// leave
 	selectedLeaveMonth := request.URL.Query().Get("month_leave")
 	if selectedLeaveMonth == "" {
 		selectedLeaveMonth = currentDate.Format("January 2006")
 	}
 	data["selectedLeaveMonth"] = selectedLeaveMonth
-
 	todayLeave := request.URL.Query().Get("today_leave") == "true"
 	data["todayLeave"] = todayLeave
-
 	leaveModel := models.NewLeaveModel(controller.db)
 	leaveList, err := leaveModel.GetLeaveList(employee.NIK, selectedLeaveMonth, todayLeave)
 	if err != nil {
 		data["errorList"] = "Error saat menampilkan list pengajuan cuti: " + err.Error()
 	}
 	data["leaves"] = leaveList
-
 	totalLeaveAll, totalLeaveThisMonth, err := leaveModel.GetLeaveCounts(employee.NIK, selectedLeaveMonth)
 	if err != nil {
 		fmt.Println(err)
 	}
 	data["totalLeaveAll"] = totalLeaveAll
 	data["totalLeaveThisMonth"] = totalLeaveThisMonth
-
 	salaryModel := models.NewSalaryModel(controller.db)
 	slip, errSlip := salaryModel.GetSalarySlipsByNIK(employee.NIK)
 	if errSlip != nil {
@@ -244,6 +239,8 @@ func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWri
 		data["salarySlips"] = slip
 	}
 
+
+	// salary
 	wages, errWages := salaryModel.GetEmployeeWagesByNIK(employee.NIK)
 	if errWages != nil {
 		data["error"] = "Gagal mengambil data gaji" + errWages.Error()
@@ -251,6 +248,22 @@ func (controller *EmployeeController) DetailEmployee(httpWriter http.ResponseWri
 		data["wages"] = wages
 	}
 
+
+	// kpi
+	selectedKPIMonth := request.URL.Query().Get("month_kpi")
+	if selectedKPIMonth == "" {
+		selectedKPIMonth = currentDate.Format("January 2006")
+	}
+	data["selectedKPIMonth"] = selectedKPIMonth
+	todayKPI := request.URL.Query().Get("today_kpi") == "true"
+	data["todayKPI"] = todayKPI
+	kpiModel := models.NewKPIModel(controller.db)
+	kpi, errKPI := kpiModel.FindKPIList(employee.NIK, selectedKPIMonth, todayKPI)
+	if errKPI != nil {
+		data["error"] = "Gagal mengambil data kpi: " + errKPI.Error()
+	} else {
+		data["kpi"] = kpi
+	}
 
 	data["currentPath"] = request.URL.Path
 	templateLayout.ExecuteTemplate(httpWriter, "base", data)

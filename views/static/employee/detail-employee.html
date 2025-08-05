@@ -588,6 +588,277 @@ Karyawan
             </div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-12 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="todayKPI" onclick="filterTodayKPI(this)" {{ if .todayKPI }} checked {{ end }}>
+                                <label class="form-check-label" for="todayKPI">KPI Hari Ini</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <select class="form-select mb-3" id="monthSelect" onchange="changeMonthKPI(this)">
+                                {{range .months}}
+                                    <option value="{{.}}" {{if eq . $.selectedKPIMonth}}selected{{end}}>{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="kpiTable" class="table table-hover my-0">
+                            <thead>
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>NIK</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Dimulai</th>
+                                    <th>Deadline</th>
+                                    <th>Final Status</th>
+                                    <th>Dibuat pada</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ $Employee_UUID := .employee.UUID }}
+                                {{range .kpi}}
+                                <tr>
+                                    <td>{{ .Employee_Name}}</td>
+                                    <td>{{ .Employee_NIK}}</td>
+                                    <td>{{ .Title}}</td>
+                                    <td>
+                                        {{ if eq .Status "not_started" }}
+                                            <span class="badge bg-warning">Menunggu</span>
+                                        {{ else if eq .Status "in_progress" }}
+                                            <span class="badge bg-info">On Progress</span>
+                                        {{ else if eq .Status "done" }}
+                                            <span class="badge bg-success">Selesai</span>
+                                        {{ else }}
+                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                        {{ end }}
+                                    </td>
+                                    <td>{{ .Started_At }}</td>
+                                    <td>
+                                        {{ .Deadline }}
+                                    </td>
+                                    <td>
+                                        {{ if eq .Final_Status "pending" }}
+                                            <span class="badge bg-warning">Menunggu</span>
+                                        {{ else if eq .Final_Status "finished" }}
+                                            <span class="badge bg-info">Selesai</span>
+                                        {{ else if eq .Final_Status "failed" }}
+                                            <span class="badge bg-danger">Gagal</span>
+                                        {{ else }}
+                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                        {{ end }}
+                                    </td>
+                                    <td>
+                                        {{ .Created_At }}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="mx-1">
+                                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#detail{{ .ID }}">
+                                                    Detail
+                                                </button>
+                                                  
+                                                  <!-- Modal -->
+                                                <div class="modal fade" id="detail{{ .ID }}" tabindex="-1" aria-labelledby="detail{{ .ID }}Label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-bottom-0">
+                                                                <h1 class="modal-title fs-5" id="detail{{ .ID }}Label"><strong>Detail KPI {{ .Employee_Name }}</strong></h1>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Tanggal pengajuan <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{.Created_At}}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">NIK <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Employee_NIK }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Nama <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Employee_Name }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Judul <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{ .Title }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Deskripsi <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{ .Description }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Target Value <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{ .Target_Value }} {{ .Unit }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Status <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{ if eq .Status "not_started" }}
+                                                                            <span class="badge bg-warning">Menunggu</span>
+                                                                        {{ else if eq .Status "in_progress" }}
+                                                                            <span class="badge bg-info">On Progress</span>
+                                                                        {{ else if eq .Status "done" }}
+                                                                            <span class="badge bg-success">Selesai</span>
+                                                                        {{ else }}
+                                                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                                                        {{ end }}
+                                                                    </div>
+                                                                </div>
+                                                                <hr class="mx-0">
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Dimulai Tanggal <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{ .Started_At }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Tenggat Waktu <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Deadline }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Selesai Tanggal <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Completed_At }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Bukti Lampiran <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>
+                                                                            {{ if .Evidence_File.Valid }}
+                                                                                <img src="/images/kpi_evidence/{{ .Evidence_File.String }}" alt="bukti" class="img-fluid rounded mb-2" width="128" height="128" />
+
+                                                                                <a href="data:image/jpeg;base64,{{ .Evidence_File.String }}" download="lampiran.jpg">Download</a>
+                                                                            {{ else }}
+                                                                                <span>-</span>
+                                                                            {{ end }}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <hr class="mx-0">
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Dibuat oleh <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Admin_Name }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Final Status <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{ if eq .Final_Status "pending" }}
+                                                                            <span class="badge bg-warning">Menunggu</span>
+                                                                        {{ else if eq .Final_Status "finished" }}
+                                                                            <span class="badge bg-info">Selesai</span>
+                                                                        {{ else if eq .Final_Status "failed" }}
+                                                                            <span class="badge bg-danger">Gagal</span>
+                                                                        {{ else }}
+                                                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                                                        {{ end }}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Diproses tanggal <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Checked_At }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Score <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <span>{{ .Score }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row mb-2">
+                                                                    <div class="col-4">
+                                                                        <h6><strong class="d-flex justify-content-between">Catatan Admin <span>:</span></strong></h6>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        {{ .Admin_Notes }}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mx-1">
+                                                <a href="/kpi/evaluasi-kpi?id={{.ID}}&path=detail_employee&uuid={{ $Employee_UUID }}" class="btn btn-primary btn-sm">Evaluasi</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {{ end }}
 
@@ -608,6 +879,12 @@ Karyawan
     });
     $(document).ready(function () {
         $('#slipTable').DataTable({
+            ordering: false,
+            pageLength: 10
+        });
+    });
+    $(document).ready(function () {
+        $('#kpiTable').DataTable({
             ordering: false,
             pageLength: 10
         });
@@ -634,6 +911,18 @@ Karyawan
     function filterTodayLeave(checkbox) {
         const params = new URLSearchParams(window.location.search);
         params.set('today_leave', checkbox.checked ? 'true' : 'false'); // ubah param filter
+        window.location.search = params.toString();
+    }
+
+    function changeMonthKPI(select) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('month_kpi', select.value); // tambahkan/ubah parameter bulan
+        window.location.search = params.toString();
+    }
+    
+    function filterTodayKPI(checkbox) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('today_kpi', checkbox.checked ? 'true' : 'false'); // ubah param filter
         window.location.search = params.toString();
     }
 </script>

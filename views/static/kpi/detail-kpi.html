@@ -1,0 +1,294 @@
+{{ define "title" }}
+Edit KPI
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between">
+                            <a href="/kpi/list-kpi" class="d-flex align-items-center">
+                                <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                                <h3 class="ms-2 mb-0 text-dark">Detail KPI</h3>
+                            </a>
+                            <div class="mx-1">
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#detail{{ .kpi.ID }}">
+                                    Detail
+                                </button>
+                                                  
+                                  <!-- Modal -->
+                                <div class="modal fade" id="detail{{ .kpi.ID }}" tabindex="-1" aria-labelledby="detail{{ .kpi.ID }}Label" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                        <div class="modal-content">
+                                            <div class="modal-header border-bottom-0">
+                                                <h1 class="modal-title fs-5" id="detail{{ .kpi.ID }}Label"><strong>Detail KPI {{ .kpi.Employee_Name }}</strong></h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Tanggal pengajuan <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Created_At}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">NIK <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Employee_NIK }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Nama <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Employee_Name }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Judul <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Title }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Deskripsi <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Description }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Target Value <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Target_Value }} {{ .kpi.Unit }}</span>
+                                                    </div>
+                                                </div>
+                                                                
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Status <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        {{ if eq .kpi.Status "not_started" }}
+                                                            <span class="badge bg-warning">Menunggu</span>
+                                                        {{ else if eq .kpi.Status "on_progress" }}
+                                                            <span class="badge bg-info">On Progress</span>
+                                                        {{ else if eq .kpi.Status "done" }}
+                                                            <span class="badge bg-success">Selesai</span>
+                                                        {{ else }}
+                                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                                        {{ end }}
+                                                    </div>
+                                                </div>
+                                                <hr class="mx-0">
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Dimulai Tanggal <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Started_At }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Tenggat Waktu <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Deadline }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Selesai Tanggal <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Completed_At }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Bukti Lampiran <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>
+                                                            {{ if .kpi.Evidence_File.Valid }}
+                                                                <img src="/images/kpi_evidence/{{ .kpi.Evidence_File.String }}" alt="bukti" class="img-fluid rounded mb-2" width="128" height="128" />
+
+                                                                <a href="data:image/jpeg;base64,{{ .kpi.Evidence_File.String }}" download="lampiran.jpg">Download</a>
+                                                            {{ else }}
+                                                                <span>-</span>
+                                                            {{ end }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <hr class="mx-0">
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Dibuat oleh <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Admin_Name }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Final Status <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        {{ if eq .kpi.Final_Status "pending" }}
+                                                            <span class="badge bg-warning">Menunggu</span>
+                                                        {{ else if eq .kpi.Final_Status "finished" }}
+                                                            <span class="badge bg-info">Selesai</span>
+                                                        {{ else if eq .kpi.Final_Status "failed" }}
+                                                            <span class="badge bg-danger">Gagal</span>
+                                                        {{ else }}
+                                                            <span class="badge bg-secondary">Tidak diketahui</span>
+                                                        {{ end }}
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Diproses tanggal <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Checked_At }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Score <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        <span>{{ .kpi.Score }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-4">
+                                                        <h6><strong class="d-flex justify-content-between">Catatan Admin <span>:</span></strong></h6>
+                                                    </div>
+                                                    <div class="col-8">
+                                                        {{ .kpi.Admin_Notes }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{ if eq .kpi.Status "not_started" }}
+                                    <a href="/kpi/start-kpi?id={{ .kpi.ID }}" class="btn btn-sm btn-warning rounded">Mulai Tugas</a>
+                                {{ else if eq .kpi.Status "in_progress" }}
+                                    <button type="button" class="btn btn-sm btn-success rounded" data-bs-toggle="modal" data-bs-target="#finishKPI">
+                                        Selesai Tugas
+                                    </button>
+                                                    
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="finishKPI" tabindex="-1" aria-labelledby="finishKPILabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                            <div class="modal-content">
+                                                <div class="modal-header border-bottom-0">
+                                                    <h1 class="modal-title fs-5" id="finishKPILabel"><strong>Mulai Tugas {{ .kpi.Title }}</strong></h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="form-group">
+                                                            <img src="/images/logo_danger_1.png" class="img-fluid mr-2" width="120">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <h6>Apakah anda yakin ingin memulasi tugas ini?</h6>
+                                                        </div>
+                                                    </div>
+                                                    <div class="float-end mt-3">
+                                                        <a href="/kpi/finish-kpi?id={{ .kpi.ID }}" class="btn btn-outline-success mx-1">Selesai</a>
+                                                        <button type="button" class="btn btn-outline-white mx-1" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {{ end }}
+                            </div>
+                        </div>
+                    </div>
+                <div class="card-body">
+                    <hr class="mx-1">
+                    <form action="/kpi/detail-kpi?id={{ .kpi.ID }}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="submit-progress" value="1">
+                        <div class="form-group">
+                            <div class="row mb-3">
+                                <div class="form-group">
+                                    <label for="actual_value">Progress <small class="text-danger">*</small></label>
+                                    <div class="input-group">
+                                        <input type="number" min="0" class="form-control {{ if .validation.Actual_Value }} is-invalid {{ end }}" id="actual_value" name="actual_value" value="{{ if .evaluasi.Actual_Value }}{{ .evaluasi.Actual_Value }}{{ else }}{{ .kpi.Actual_Value }}{{ end }}">
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">{{ .kpi.Unit }}</div>
+                                        </div>    
+                                        <div class="invalid-feedback">
+                                            {{ .validation.Actual_Value}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="form-group">
+									<label for="evidence_file">Bukti Pengerjaan <small class="text-danger">*</small></label>
+											
+									<div class="custom-file">
+										<input type="file" class="form-control d-none" id="evidence_file" name="evidence_file" accept="image/*">
+										<button type="button" class="btn btn-secondary" onclick="document.getElementById('evidence_file').click()">Pilih File</button>
+										<small id="selected-file-name" class="text-muted d-block mt-1">Tidak ada file yang dipilih</small>
+									</div>
+									{{ if .kpi.Evidence_File.Valid }}
+									    <img id="preview-image" src="/images/kpi_evidence/{{ .kpi.Evidence_File.String }}" alt="Preview" class="mt-2" style="max-width: 200px">
+                                    {{ else }}
+									    <img id="preview-image" src="" alt="Preview" class="mt-2 d-none" style="max-width: 200px">
+                                    {{ end }}
+								</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary rounded">Submit Progress</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+<script>
+    document.getElementById('evidence_file').addEventListener('change', function(event) {
+		const file = event.target.files[0];
+		const fileNameLabel = document.getElementById('selected-file-name');
+
+		if (file) {
+			fileNameLabel.textContent = file.name;
+
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const img = document.getElementById('preview-image');
+				img.src = e.target.result;
+				img.style.display = 'block';
+			};
+			reader.readAsDataURL(file);
+		} else {
+			fileNameLabel.textContent = 'Tidak ada file yang dipilih';
+			document.getElementById('preview-image').style.display = 'none';
+		}
+	});
+</script>
+{{ end }}
