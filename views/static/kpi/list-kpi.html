@@ -1,0 +1,263 @@
+{{ define "title" }}
+    List KPI
+{{ end }}
+
+{{ define "css_extra" }}
+<style>
+    .task-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            background: white;
+        }
+
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 1.25rem;
+            color: white;
+        }
+
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .task-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #007bff;
+        }
+
+        .admin-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-right: 0.75rem;
+        }
+
+        .admin-name {
+            font-weight: 500;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .deadline-info {
+            background: #fff3cd;
+            color: #856404;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border-left: 3px solid #ffc107;
+        }
+
+        .btn-detail {
+            border-radius: 20px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-detail:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .card-footer-custom {
+            background: transparent;
+            border-top: 1px solid #e9ecef;
+            padding: 1rem 1.25rem;
+        }
+
+        .date-created {
+            font-size: 0.75rem;
+            color: #6c757d;
+            background: #f8f9fa;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        /* Status specific colors */
+        .status-waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-progress {
+            background: #cff4fc;
+            color: #055160;
+        }
+        
+        .status-done {
+            background: #d1e7dd;
+            color: #0a3622;
+        }
+        
+        .status-unknown {
+            background: #e2e3e5;
+            color: #41464b;
+        }
+</style>
+{{ end }}    
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="row">
+        <div class="col">
+            <h1 class="h3 mb-0">List KPI</h1>
+        </div>
+        <div class="col">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col mt-1">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="todayKPI" onclick="filterTodayKPI(this)" {{ if .todayKPI }} checked {{ end }}>
+                <label class="form-check-label" for="todayKPI">KPI Hari Ini</label>
+            </div>
+        </div>
+        <div class="col">
+            <select class="form-select mb-3" id="monthSelect" onchange="changeMonth(this)">
+                {{range .months}}
+                    <option value="{{.}}" {{if eq . $.selectedMonth}}selected{{end}}>{{.}}</option>
+                {{end}}
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        {{range .kpis}}
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                <div class="card task-card h-100">
+                    <div class="card-body p-0">
+                        <div class="card-header-custom d-flex justify-content-between align-items-center">
+                            <small class="mb-0"><i class="fas fa-calendar-alt me-1"></i>{{ .Created_At }}</small>
+                            {{ if not .IsCreatedOver1Day }}
+                                <span class="date-created">Baru</span>
+                            {{ end }}
+                        </div>
+                        
+                        <div class="p-3">
+                            <div class="admin-info">
+                                <div class="admin-avatar">
+                                    JS
+                                </div>
+                                <div>
+                                    <div class="admin-name">{{ .Admin_Name }}</div>
+                                    <small class="text-muted">Project Manager</small>
+                                </div>
+                            </div>
+                            <h6 class="task-title">
+                                {{ .Title }}
+                            </h6>
+                            
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                {{ if eq .Status "not_started" }}
+                                    <span class="badge status-badge status-waiting d-flex align-items-center">
+                                        <i data-feather="clock" class="me-2"></i>Menunggu
+                                    </span>
+                                {{ else if eq .Status "in_progress" }}
+                                    <span class="badge status-badge status-progress d-flex align-items-center">
+                                        <i data-feather="loader" class="me-2"></i>On Progress
+                                    </span>
+                                {{ else if eq .Status "done" }}
+                                    <span class="badge status-badge status-done d-flex align-items-center">
+                                        <i data-feather="check-circle" class="me-2"></i>Done
+                                    </span>
+                                {{ else }}
+                                    <span class="badge status-badge status-unknown d-flex align-items-center">
+                                        <i data-feather="help-circle" class="me-2"></i>Tidak diketahui
+                                    </span>
+                                {{ end }}
+                            </div>
+                            
+                            <div class="deadline-info">
+                                <strong>Deadline:</strong> {{ .Deadline }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer-custom">
+                        <div class="d-flex justify-content-end">
+                            <a href="/kpi/detail-kpi?id={{ .ID }}" class="btn btn-sm btn-outline-primary btn-detail d-flex align-items-center">
+                                <i data-feather="eye" class="me-2"></i>Detail
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{ end }}
+    </div>
+</div>
+{{ end }}
+
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function () {
+        $('#KPITable').DataTable({
+            ordering: false, // matikan fitur sorting
+            pageLength: 25
+        });
+    });
+</script>
+
+<script>
+    function changeMonth(select) {
+        window.location.href = '?month=' + encodeURIComponent(select.value);
+    }
+    
+    function filterTodayKPI(checkbox) {
+        if (checkbox.checked) {
+            window.location.href = '?today_kpi=true';
+        } else {
+            window.location.href = '?today_kpi=false';
+        }
+    }
+</script>
+{{ end }}

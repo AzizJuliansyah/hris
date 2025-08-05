@@ -1,0 +1,112 @@
+{{ define "title" }}
+Add KPI
+{{ end }}
+
+{{ define "content" }}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="card">
+                <form action="/kpi/add-kpi" method="post">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between">
+                            <a href="/kpi" class="d-flex align-items-center">
+                                <h3 data-feather="corner-up-left" class="mb-1 text-dark"></h3>
+                                <h3 class="ms-2 mb-0 text-dark">Buat KPI Baru</h3>
+                            </a>
+                            <button type="submit" class="btn btn-sm btn-primary rounded">Submit</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="employee_NIK">Penerima KPI<small class="text-danger">*</small></label>
+                                    <select class="form-select js-example-basic-single {{ if .validation.Employee_NIK }}is-invalid{{ end }}" name="employee_nik" style="width: 100%;">
+                                        <option value="default" selected disabled>-- Pilih Karyawan --</option>
+                                        {{ $Employee_NIK := .kpi.Employee_NIK }}
+                                        {{ range .employees }}
+                                            <option value="{{ .NIK }}" {{ if eq $Employee_NIK (printf "%s" .NIK) }}selected{{ end }}>{{ .Name }}</option>
+                                        {{ end }}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Employee_NIK }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="title">Judul KPI<small class="text-danger">*</small></label>
+                                    <input type="text" class="form-control {{ if .validation.Title }} is-invalid {{ end }}" id="title" name="title" value="{{ .kpi.Title }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Title}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="description">Deskripsi KPI<small class="text-danger">*</small></label>
+                                    <textarea class="form-control {{ if .validation.Description }} is-invalid {{ end }}" id="description" name="description" rows="8">{{ .kpi.Description }}</textarea>
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Description }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="target_value">Target Yang Harus Dicapai<small class="text-danger">*</small></label>
+                                    <input type="number" min="0" class="form-control {{ if .validation.Target_Value }} is-invalid {{ end }}" id="target_value" name="target_value" value="{{ .kpi.Target_Value }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Target_Value}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="unit">Satuan Target<small class="text-danger">*</small></label>
+                                    <input type="text" class="form-control {{ if .validation.Unit }} is-invalid {{ end }}" id="unit" name="unit" value="{{ .kpi.Unit }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Unit}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="mx-1 my-4">
+                        
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="deadline">Tenggat Waktu<small class="text-danger">*</small></label>
+                                    <input type="datetime-local" class="form-control {{ if .validation.Deadline }} is-invalid {{ end }}" id="deadline" name="deadline" value="{{ .kpi.Deadline }}">
+                                    <div class="invalid-feedback">
+                                        {{ .validation.Deadline}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "js_extra" }}
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-single').select2({
+            placeholder: "Cari karyawan...",
+            allowClear: true
+        });
+    });
+</script>
+{{ end }}

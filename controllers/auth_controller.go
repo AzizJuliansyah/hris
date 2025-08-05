@@ -52,7 +52,7 @@ func (controller *AuthController) Login(httpWriter http.ResponseWriter, request 
 	authModel := models.NewAuthModel(controller.db)
 	employee, err := authModel.FindEmployeeByNIK(authInput.NIK)
 	if err != nil {
-		data["error"] = "NIK tidak ditemukan" + err.Error()
+		data["error"] = "NIK tidak ditemukan"
 		data["authInput"] = authInput
 		views.RenderTemplate(httpWriter, templateLayout, data)
 		return

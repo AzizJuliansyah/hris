@@ -148,7 +148,6 @@ func AddLeaveType(db *sql.DB, httpWriter http.ResponseWriter, request *http.Requ
 	validationResult := helpers.NewValidation().Struct(addLeave)
 	if validationResult != nil {
 		errors = validationResult.(map[string]interface{})
-		fmt.Println(errors)
 		return map[string]interface{}{
 			"validationaddLeave": errors,
 			"addLeave": addLeave,

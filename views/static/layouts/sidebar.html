@@ -48,6 +48,12 @@
                 </a>
             </li>
 
+            <li class="sidebar-item {{ if or (eq .currentPath "/kpi") (eq .currentPath "/kpi/evaluasi-kpi") (eq .currentPath "/kpi/add-kpi") (eq .currentPath "/kpi/edit-kpi") }} active {{ end }}">
+                <a class="sidebar-link" href="/kpi">
+                    <i class="align-middle" data-feather="file"></i> <span class="align-middle">KPI</span>
+                </a>
+            </li>
+
             <li class="sidebar-item {{ if or (eq .currentPath "/leave-list") (eq .currentPath "/leave/approval") (eq .currentPath "/leave/leave-type") }}active{{ end }}">
                 <a class="sidebar-link" href="/leave-list">
                     <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">Cuti</span>
@@ -75,6 +81,12 @@
                 <a class="sidebar-link" href="/attendance-submit">
                     <i class="align-middle" data-feather="log-in"></i> <span
                         class="align-middle">Kehadiran</span>
+                </a>
+            </li>
+
+            <li class="sidebar-item {{ if or (eq .currentPath "/kpi/list-kpi") (eq .currentPath "/kpi/detail-kpi")  }} active {{ end }}">
+                <a class="sidebar-link" href="/kpi/list-kpi">
+                    <i class="align-middle" data-feather="file"></i> <span class="align-middle">KPI</span>
                 </a>
             </li>
 

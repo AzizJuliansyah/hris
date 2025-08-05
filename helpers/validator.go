@@ -3,10 +3,10 @@ package helpers
 import (
 	"database/sql"
 	"fmt"
+	"hris/config"
 	"log"
 	"reflect"
 	"strings"
-	"hris/config"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
