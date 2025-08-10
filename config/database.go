@@ -10,10 +10,10 @@ import (
 func DBConnection() (db *sql.DB, err error) {
 	dbDriver := "mysql"
 	dbUser := "root"
-	dbPass := ""
+	dbPass := "123456"
 	dbName := "hris"
 
-	db, err = sql.Open(dbDriver, dbUser+":"+dbPass+"@tcp(localhost:3306)/"+dbName+"?parseTime=true&loc=Asia%2FJakarta")
+	db, err = sql.Open(dbDriver, dbUser+":"+dbPass+"@tcp(mysql-container:3306)/"+dbName+"?parseTime=true&loc=Asia%2FJakarta")
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(time.Minute * 5)
